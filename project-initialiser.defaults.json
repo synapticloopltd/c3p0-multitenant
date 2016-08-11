@@ -20,18 +20,28 @@
   "buildDotGradle": {
     "jvm": {
       "targetCompatibility": {
-        "name": "java8",
-        "value": "1.8"
+        "name": "java7",
+        "value": "1.7"
       },
       "sourceCompatibility": {
-        "name": "java8",
-        "value": "1.8"
+        "name": "java7",
+        "value": "1.7"
       }
     },
     "javadoc": {"jvm": {
-      "name": "java8",
-      "value": "8"
+      "name": "java7",
+      "value": "7"
     }},
+    "copyrightr": {
+      "onlyReplaceFirst": false,
+      "dryRun": false,
+      "yearSeparator": " - ",
+      "copyrightHolder": "synapticloop"
+    },
+    "mavenPublish": {
+      "artifactId": "c3p0-multitenant",
+      "group": "synapticloop"
+    },
     "plugins": {"plugins": [
       {
         "name": "java",
@@ -40,14 +50,51 @@
       {
         "name": "eclipse",
         "value": "id 'eclipse'"
+      },
+      {
+        "name": "cobertura",
+        "value": "id 'net.saliman.cobertura' version '2.3.0'"
+      },
+      {
+        "name": "copyrightr",
+        "value": "id 'synapticloop.copyrightr' version '1.0.1'"
+      },
+      {
+        "name": "documentr",
+        "value": "id 'synapticloop.documentr' version '2.0.0'"
+      },
+      {
+        "name": "maven-publish",
+        "value": "id 'maven-publish'"
+      },
+      {
+        "name": "github-publish",
+        "value": "id 'co.riiid.gradle' version '0.4.2'"
+      },
+      {
+        "name": "bintray-publish",
+        "value": "id 'com.jfrog.bintray' version '1.6'"
       }
     ]},
     "header": {},
     "information": {
-      "archivesBaseName": "",
-      "description": "",
+      "archivesBaseName": "c3p0-multitenant",
+      "description": "Multi tenanted c3p0 pool",
       "version": "0.0.1",
-      "group": ""
+      "group": "synapticloop"
+    },
+    "documentr": {
+      "extension": {
+        "name": "MarkDown",
+        "value": "md"
+      },
+      "directory": ".",
+      "verbose": false
+    },
+    "githubPublish": {},
+    "bintrayPublish": {
+      "publication": "maven",
+      "name": "c3p0-multitenant"
     },
     "dependencies": {
       "compileDependencies": [],

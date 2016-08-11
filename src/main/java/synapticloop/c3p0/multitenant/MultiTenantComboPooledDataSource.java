@@ -37,8 +37,6 @@ import com.mchange.v2.log.MLog;
 import com.mchange.v2.log.MLogger;
 import com.mchange.v2.naming.JavaBeanReferenceMaker;
 
-import synapticloop.datastructures.LruCache;
-
 /**
  * This is a multi tenant connection pool for connections to a variety of sources
  * 
@@ -69,7 +67,6 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	private Strategy strategy = Strategy.ROUND_ROBIN;
 	private List<String> tenants;
 	private List<ComboPooledDataSource> comboPooledDataSources = new ArrayList<ComboPooledDataSource>();
-	private LruCache<String, ComboPooledDataSource> dbPoolLruCache;
 
 	private int comboPooledDataSourcesSize;
 	private int comboPooledDataSourcesCurrent = 0;
@@ -131,7 +128,6 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	}
 
 	private void initialiseMultiTenantPools() {
-		dbPoolLruCache = new LruCache<String, ComboPooledDataSource>(tenants.size());
 		boolean isDebugEnabled = LOGGER.isLoggable(MLevel.DEBUG);
 
 		for (String tenant : tenants) {
@@ -147,7 +143,6 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 
 			// now set up all of the data structures
 			comboPooledDataSources.add(comboPooledDataSource);
-			dbPoolLruCache.put(tenant, comboPooledDataSource);
 			connectionRequestHitCountMap.put(tenant, new MutableInt());
 		}
 

@@ -67,10 +67,10 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		ROUND_ROBIN, // just go through the connection pools, disregarding load
 		LOAD_BALANCED, // get the lowest number of connections and use this pool
 		SERIAL, // use up all of the first connections, going to the next one when 
-		        // full
+		// full
 		WEIGHTED, // weight the connections, from the passed in values
 		NAMED // get a connection from one of the named pools, there may be more
-		         //than one pool per name, they will be weighted between them
+		//than one pool per name, they will be weighted between them
 	}
 
 	private Strategy strategy = Strategy.ROUND_ROBIN;
@@ -189,22 +189,24 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 			connectionRequestHitCountMap.put(tenant, new MutableInt());
 		}
 
-		for(int i = 0; i < tenants.size(); i++) {
-			try {
-				weightedMap.add(weightings.get(i), comboPooledDataSourceMap.get(tenants.get(i)));
-			} catch(IndexOutOfBoundsException ex) {
-				// we have too few weightings - log it and carry on
-				if(LOGGER.isLoggable(MLevel.SEVERE)) {
-					LOGGER.severe(String.format("Could not determine the weighting for pool '%s', setting it to 1", tenants.get(i)));
+		if(this.strategy == Strategy.WEIGHTED) {
+			for(int i = 0; i < tenants.size(); i++) {
+				try {
+					weightedMap.add(weightings.get(i), comboPooledDataSourceMap.get(tenants.get(i)));
+				} catch(IndexOutOfBoundsException ex) {
+					// we have too few weightings - log it and carry on
+					if(LOGGER.isLoggable(MLevel.SEVERE)) {
+						LOGGER.severe(String.format("Could not determine the weighting for pool '%s', setting it to 1", tenants.get(i)));
+					}
+					weightedMap.add(1, comboPooledDataSourceMap.get(tenants.get(i)));
 				}
-				weightedMap.add(1, comboPooledDataSourceMap.get(tenants.get(i)));
 			}
-		}
-		
-		if(weightings.size() > tenants.size()) {
-			if(LOGGER.isLoggable(MLevel.SEVERE)) {
-				// TODO - need to add in the numbers here
-				LOGGER.severe(String.format("I received 'int' weightings for the 'int' tenants, ignoring extra weightings..."));
+
+			if(weightings.size() > tenants.size()) {
+				if(LOGGER.isLoggable(MLevel.SEVERE)) {
+					// TODO - need to add in the numbers here
+					LOGGER.severe(String.format("I received 'int' weightings for the 'int' tenants, ignoring extra weightings..."));
+				}
 			}
 		}
 

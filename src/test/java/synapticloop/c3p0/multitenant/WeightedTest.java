@@ -34,7 +34,7 @@ public class WeightedTest extends BaseTest {
 	@Test
 	public void testConnectionWeighting() throws SQLException {
 		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, WEIGHTINGS);
-		for(int i = 0; i < 1000; i++) {
+		for(int i = 0; i < 100; i++) {
 			Connection connection = multiTenantComboPooledDataSource.getConnection();
 			connection.close();
 		}
@@ -42,6 +42,18 @@ public class WeightedTest extends BaseTest {
 		for (String tenant : TENANTS) {
 			System.out.println(multiTenantComboPooledDataSource.getRequestCountForTenant(tenant));
 		}
+
+		int one = multiTenantComboPooledDataSource.getRequestCountForTenant("one");
+		int two = multiTenantComboPooledDataSource.getRequestCountForTenant("two");
+		int three = multiTenantComboPooledDataSource.getRequestCountForTenant("three");
+		int four = multiTenantComboPooledDataSource.getRequestCountForTenant("four");
+
+		// allowing variance - there will be more variance with the smaller 
+		// weightings
+		assertTrue(one > 50 && one < 70);
+		assertTrue(two > 15 && two < 35);
+		assertTrue(three > 5 && three < 15);
+		assertTrue(four > 2 && four < 8);
 
 	}
 }

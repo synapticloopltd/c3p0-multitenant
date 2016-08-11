@@ -45,7 +45,8 @@ dependencies {
 
 	testRuntime 'org.postgresql:postgresql:9.4.1209.jre7'
 	testRuntime 'junit:junit:4.12'
-
+	testRuntime 'org.slf4j:slf4j-api:1.7.13'
+	
 	testCompile 'org.postgresql:postgresql:9.4.1209.jre7'
 	testCompile 'junit:junit:4.12'
 }
@@ -62,6 +63,20 @@ configurations.all {
 				}
 		}
 	}
+}
+
+/*
+ * COBERTURA
+ */
+
+cobertura {
+	coverageFormats = [ 'html', 'xml']
+}
+
+test {
+	include '**/*Test.class' 
+	maxParallelForks = 1
+	forkEvery = 50 
 }
 
 copyrightr {

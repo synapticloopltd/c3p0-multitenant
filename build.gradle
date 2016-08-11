@@ -1,0 +1,31 @@
+plugins {
+	id 'java'
+	id 'eclipse'
+}
+
+group = 'synapticloop'
+archivesBaseName = 'c3p0-multitenant'
+description = """Multi tenanted c3p0 pool"""
+version = '0.0.1'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+	jcenter()
+}
+
+dependencies {
+	runtime 'com.mchange:c3p0:0.9.5.2'
+
+	compile 'com.mchange:c3p0:0.9.5.2'
+
+	testRuntime 'org.postgresql:postgresql:9.4.1209.jre7'
+	testRuntime 'junit:junit:4.12'
+
+	testCompile 'org.postgresql:postgresql:9.4.1209.jre7'
+	testCompile 'junit:junit:4.12'
+
+}

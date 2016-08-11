@@ -28,18 +28,18 @@ import synapticloop.c3p0.multitenant.MultiTenantComboPooledDataSource.Strategy;
 public class SerialTest extends BaseTest {
 
 	@Test
-	public void testLruStrategy() throws SQLException {
-		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(tenants, Strategy.SERIAL);
+	public void testSerialStrategy() throws SQLException {
+		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.SERIAL);
 		for(int i = 0; i < 4; i++) {
 			Connection connection = multiTenantComboPooledDataSource.getConnection();
 			assertNotNull(connection);
 
-			assertEquals(multiTenantComboPooledDataSource.getRequestCountForTenant(tenants.get(i)), 1);
+			assertEquals(multiTenantComboPooledDataSource.getRequestCountForTenant(TENANTS.get(i)), 1);
 
 			connection.close();
 		}
 
-		for (String tenant : tenants) {
+		for (String tenant : TENANTS) {
 			assertEquals(multiTenantComboPooledDataSource.getRequestCountForTenant(tenant), 1);
 		}
 	}

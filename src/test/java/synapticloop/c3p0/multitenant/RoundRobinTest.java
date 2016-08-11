@@ -29,17 +29,17 @@ public class RoundRobinTest extends BaseTest {
 
 	@Test
 	public void testLruStrategy() throws SQLException {
-		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(tenants, Strategy.ROUND_ROBIN);
+		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.ROUND_ROBIN);
 		for(int i = 0; i < 4; i++) {
 			Connection connection = multiTenantComboPooledDataSource.getConnection();
 			assertNotNull(connection);
 
-			assertEquals(multiTenantComboPooledDataSource.getRequestCountForTenant(tenants.get(i)), 1);
+			assertEquals(multiTenantComboPooledDataSource.getRequestCountForTenant(TENANTS.get(i)), 1);
 
 			connection.close();
 		}
 
-		for (String tenant : tenants) {
+		for (String tenant : TENANTS) {
 			assertEquals(multiTenantComboPooledDataSource.getRequestCountForTenant(tenant), 1);
 		}
 	}

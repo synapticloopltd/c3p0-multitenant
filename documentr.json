@@ -1,0 +1,16 @@
+{
+	"context": {
+	},
+	"templates": [
+		{ "type":"inbuilt", "value":"jvm-compatability" },
+		{ "type":"inbuilt", "value":"project-name" },
+		{ "type":"inbuilt", "value":"project-description" },
+
+		{ "type":"inbuilt", "value":"gradle-build" },
+		{ "type":"inbuilt", "value":"gradle-test" },
+
+		{ "type":"inbuilt", "value":"dependencies" },
+
+		{ "type":"inbuilt", "value":"attribution" }
+	]
+}

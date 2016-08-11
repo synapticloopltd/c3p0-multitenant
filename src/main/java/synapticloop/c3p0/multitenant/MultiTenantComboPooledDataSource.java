@@ -38,7 +38,11 @@ import com.mchange.v2.log.MLogger;
 import com.mchange.v2.naming.JavaBeanReferenceMaker;
 
 /**
- * This is a multi tenant connection pool for connections to a variety of sources
+ * This is a multi tenant connection pool for connections to a variety of 
+ * sources, this was developed primarily for cockroachDB (see
+ * https://www.cockroachlabs.com/ for more details) although any multi tenanted
+ * polls that need to connect to multiple databases that all hold the same 
+ * data will work.
  * 
  * @author synapticloop
  *
@@ -53,6 +57,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 
 	private static final String PROPERTY_STRATEGY = "strategy";
 	private static final String PROPERTY_TENANTS = "tenants";
+	private static final String PROPERTY_WEIGHTING = "weighting";
 
 	static {
 		LOGGER = MLog.getLogger(MultiTenantComboPooledDataSource.class);
@@ -61,17 +66,24 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	public enum Strategy {
 		ROUND_ROBIN, // just go through the connection pools, disregarding load
 		LOAD_BALANCED, // get the lowest number of connections and use this pool
-		SERIAL // use up all of the first connections, going to the next one when full
+		SERIAL, // use up all of the first connections, going to the next one when 
+		        // full
+		WEIGHTED, // weight the connections, from the passed in values
+		NAMED // get a connection from one of the named pools, there may be more
+		         //than one pool per name, they will be weighted between them
 	}
 
 	private Strategy strategy = Strategy.ROUND_ROBIN;
 	private List<String> tenants;
 	private List<ComboPooledDataSource> comboPooledDataSources = new ArrayList<ComboPooledDataSource>();
+	private List<Integer> weightings;
 
 	private int comboPooledDataSourcesSize;
 	private int comboPooledDataSourcesCurrent = 0;
 
 	private Map<String, MutableInt> connectionRequestHitCountMap = new HashMap<String, MutableInt>();
+	private WeightedMap<ComboPooledDataSource> weightedMap = new WeightedMap<ComboPooledDataSource>();
+	private Map<String, ComboPooledDataSource> comboPooledDataSourceMap = new HashMap<String, ComboPooledDataSource>();
 
 	class MutableInt {
 		private int value = 0;
@@ -120,9 +132,39 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		initialiseMultiTenantPools();
 	}
 
+	/**
+	 * Create a multi tenant combo pooled data source, with a list of named 
+	 * configurations for c3p0 
+	 * 
+	 * @param tenants The list of named configurations to use
+	 * @param strategy The strategy to use
+	 */
 	public MultiTenantComboPooledDataSource(List<String> tenants, Strategy strategy) {
 		this.tenants = tenants;
 		this.strategy = strategy;
+
+		initialiseMultiTenantPools();
+	}
+
+	/**
+	 * Create a multi tenant combo pooled data source with a 'weighted' strategy 
+	 * for each of the list of named configurations for c3p0.  The list size of 
+	 * the weightings should be the same as the size of the named  tenants, if 
+	 * not, the weighting will be set to 1.
+	 * 
+	 * The weightings do not have to add up to any particular number, this will 
+	 * be used when randomly assigning a connection, based on the weighting
+	 * 
+	 * @param tenants The list of named configurations to use
+	 * @param weightings The list of weightings for each of the named 
+	 *     configurations to use
+	 */
+	public MultiTenantComboPooledDataSource(List<String> tenants, List<Integer> weightings) {
+		this.tenants = tenants;
+		this.weightings = weightings;
+
+		// This must always be the weighted strategy
+		this.strategy = Strategy.WEIGHTED;
 
 		initialiseMultiTenantPools();
 	}
@@ -136,6 +178,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 			}
 
 			ComboPooledDataSource comboPooledDataSource = new ComboPooledDataSource(tenant);
+			comboPooledDataSourceMap.put(tenant, comboPooledDataSource);
 
 			if(isDebugEnabled) {
 				LOGGER.log(MLevel.DEBUG, String.format("Created connection pool for tenant '%s'", tenant));
@@ -146,9 +189,36 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 			connectionRequestHitCountMap.put(tenant, new MutableInt());
 		}
 
+		for(int i = 0; i < tenants.size(); i++) {
+			try {
+				weightedMap.add(weightings.get(i), comboPooledDataSourceMap.get(tenants.get(i)));
+			} catch(IndexOutOfBoundsException ex) {
+				// we have too few weightings - log it and carry on
+				if(LOGGER.isLoggable(MLevel.SEVERE)) {
+					LOGGER.severe(String.format("Could not determine the weighting for pool '%s', setting it to 1", tenants.get(i)));
+				}
+				weightedMap.add(1, comboPooledDataSourceMap.get(tenants.get(i)));
+			}
+		}
+		
+		if(weightings.size() > tenants.size()) {
+			if(LOGGER.isLoggable(MLevel.SEVERE)) {
+				// TODO - need to add in the numbers here
+				LOGGER.severe(String.format("I received 'int' weightings for the 'int' tenants, ignoring extra weightings..."));
+			}
+		}
+
 		comboPooledDataSourcesSize = comboPooledDataSources.size();
 	}
 
+	/**
+	 * Get a connection from one of the poolsl this will depend on the pool that 
+	 * was chosen when instatiation occurred
+	 * 
+	 * @return the connection to one of the tennants
+	 * 
+	 * @throws SQLException if there was en error getting a connection
+	 */
 	public Connection getConnection() throws SQLException {
 		if(LOGGER.isLoggable(MLevel.DEBUG)) {
 			LOGGER.log(MLevel.DEBUG, String.format("'%s' connection requested", this.strategy.toString()));
@@ -161,11 +231,20 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 			return(getLoadBalancedConnection());
 		case SERIAL:
 			return(getSerialConnection());
+		case WEIGHTED:
+			return(getWeightedConnection());
 		default:
 			throw new SQLException(String.format("Could not determine the strategy for connections, was looking for '%s'", strategy.toString()));
 		}
 	}
 
+	/**
+	 * Get a round robin connection to the underlying database pools.  The round
+	 * 
+	 * @return the round robin connection
+	 * 
+	 * @throws SQLException If there was an error connecting to the database
+	 */
 	private Connection getRoundRobinConnection() throws SQLException {
 		ComboPooledDataSource comboPooledDataSource = comboPooledDataSources.get(comboPooledDataSourcesCurrent);
 		Connection connection = comboPooledDataSource.getConnection();
@@ -180,6 +259,11 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		return(connection);
 	}
 
+	/**
+	 * Get a serial connection
+	 * @return
+	 * @throws SQLException
+	 */
 	private synchronized Connection getSerialConnection() throws SQLException {
 		for (ComboPooledDataSource comboPooledDataSource : comboPooledDataSources) {
 			if(comboPooledDataSource.getNumBusyConnections() < comboPooledDataSource.getMaxPoolSize()) {
@@ -199,19 +283,46 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		int maxBusyConnections = 0;
 		int poolIndex = 0;
 		int readyPoolIndex = 0;
-		for (ComboPooledDataSource comboPooledDataSource : comboPooledDataSources) {
-			int numBusyConnections = comboPooledDataSource.getNumBusyConnections();
-			if(numBusyConnections > maxBusyConnections) {
-				maxBusyConnections = numBusyConnections;
-			} else {
-				readyPoolIndex = poolIndex;
-			}
-			poolIndex++;
-		}
+		String dataSourceName = null;
 
-		return(comboPooledDataSources.get(readyPoolIndex).getConnection());
+		try {
+			for (ComboPooledDataSource comboPooledDataSource : comboPooledDataSources) {
+				// TODO - we don'e really want to fail on this one... - need to split out try/catch
+				int numBusyConnections = comboPooledDataSource.getNumBusyConnections();
+				if(numBusyConnections > maxBusyConnections) {
+					maxBusyConnections = numBusyConnections;
+				} else {
+					readyPoolIndex = poolIndex;
+				}
+				poolIndex++;
+			}
+
+			ComboPooledDataSource comboPooledDataSource = comboPooledDataSources.get(readyPoolIndex);
+			dataSourceName = comboPooledDataSource.getDataSourceName();
+			return(comboPooledDataSource.getConnection());
+		} catch (SQLException ex) {
+			throw new SQLException(String.format("Could not get a connection to data source name '%s'", dataSourceName), ex);
+		}
 	}
 
+	/**
+	 * Get the weighted connection
+	 * 
+	 * @return the connection for the weighted parameter
+	 * 
+	 * @throws SQLException if there was wn error getting the connection
+	 */
+	private Connection getWeightedConnection() throws SQLException {
+		ComboPooledDataSource comboPooledDataSource = weightedMap.next();
+		incrementRequestHitCountMap(comboPooledDataSource);
+		return(comboPooledDataSource.getConnection());
+	}
+
+	/**
+	 * Increment the number of hits for the request to the combo pool
+	 * 
+	 * @param comboPooledDataSource the combo pool to increment the hit for
+	 */
 	private void incrementRequestHitCountMap(ComboPooledDataSource comboPooledDataSource) {
 		connectionRequestHitCountMap.get(comboPooledDataSource.getDataSourceName()).increment();
 	}
@@ -235,4 +346,11 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		return REFERENCE_MAKER.createReference(this);
 	}
 
+	/**
+	 * Return the strategy that is in use for the combo pool
+	 * 
+	 * @return the strategy for the combo pool
+	 */
+	public Strategy getStrategy() { return(this.strategy); }
+	public int getTotalWeightings() { return(weightedMap.getTotalWeightings()); }
 }

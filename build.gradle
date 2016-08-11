@@ -13,7 +13,7 @@ plugins {
 	id 'eclipse'
 	id 'net.saliman.cobertura' version '2.3.0'
 	id 'synapticloop.copyrightr' version '1.0.1'
-	id 'synapticloop.documentr' version '2.0.0'
+	id 'synapticloop.documentr' version '2.1.1'
 	id 'maven-publish'
 	id 'co.riiid.gradle' version '0.4.2'
 	id 'com.jfrog.bintray' version '1.6'
@@ -55,10 +55,14 @@ configurations.all {
 	resolutionStrategy {
 		failOnVersionConflict()
 
+		eachDependency {
+			DependencyResolveDetails details ->
+				if (details.requested.group == 'junit') {
+					details.useVersion '4.12'
+				}
+		}
 	}
 }
-Could not render line: project.buildDotGradle.extension.directory
-
 
 copyrightr {
 	// If set to true (default), this will only log what would have been 

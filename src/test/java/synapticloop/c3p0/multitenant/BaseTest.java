@@ -22,7 +22,10 @@ import java.util.List;
 public class BaseTest {
 	protected MultiTenantComboPooledDataSource multiTenantComboPooledDataSource;
 
-	protected static final List<String> tenants = new ArrayList<String>();
+	protected static final List<Integer> WEIGHTINGS = new ArrayList<Integer>();
+	protected static final List<Integer> TOO_MANY_WEIGHTINGS = new ArrayList<Integer>();
+	protected static final List<Integer> TOO_FEW_WEIGHTINGS = new ArrayList<Integer>();
+	protected static final List<String> TENANTS = new ArrayList<String>();
 	static {
 		try {
 			Class.forName("org.postgresql.Driver");
@@ -30,10 +33,26 @@ public class BaseTest {
 			ex.printStackTrace();
 		}
 
-		tenants.add("one");
-		tenants.add("two");
-		tenants.add("three");
-		tenants.add("four");
+		TENANTS.add("one");
+		TENANTS.add("two");
+		TENANTS.add("three");
+		TENANTS.add("four");
+
+		WEIGHTINGS.add(60);
+		WEIGHTINGS.add(25);
+		WEIGHTINGS.add(10);
+		WEIGHTINGS.add(5);
+
+		TOO_MANY_WEIGHTINGS.add(60);
+		TOO_MANY_WEIGHTINGS.add(25);
+		TOO_MANY_WEIGHTINGS.add(10);
+		TOO_MANY_WEIGHTINGS.add(5);
+		TOO_MANY_WEIGHTINGS.add(5);
+
+		TOO_FEW_WEIGHTINGS.add(60);
+		TOO_FEW_WEIGHTINGS.add(25);
+		TOO_FEW_WEIGHTINGS.add(10);
+
 	}
 
 }

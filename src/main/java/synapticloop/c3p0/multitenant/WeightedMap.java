@@ -20,6 +20,10 @@ import java.util.NavigableMap;
 import java.util.Random;
 import java.util.TreeMap;
 
+import com.mchange.v2.log.MLevel;
+import com.mchange.v2.log.MLog;
+import com.mchange.v2.log.MLogger;
+
 /**
  * This is a weighted map which will return an element, based on its integer
  * weighting from a random selection
@@ -29,6 +33,11 @@ import java.util.TreeMap;
  * @param <E> The type for the collection 
  */
 public class WeightedMap<E> {
+	private static final MLogger LOGGER;
+	static {
+		LOGGER = MLog.getLogger(WeightedMap.class);
+	}
+
 	private final NavigableMap<Integer, E> map = new TreeMap<Integer, E>();
 	private final Random random;
 	private int totalWeightings = 0;
@@ -51,13 +60,20 @@ public class WeightedMap<E> {
 	}
 
 	/**
-	 * Add a new entry into the weighted map
+	 * Add a new entry into the weighted map.  If the weight is less than ot 
+	 * equal to 0, then it will log an error and ignore adding it to the map.
 	 * 
-	 * @param weight the weight
-	 * @param entry the entry
+	 * @param weight the weight to add (__MUST__ be > 0 to be added)
+	 * @param entry the entry the entry to add to the map with the weight
 	 */
 	public void add(Integer weight, E entry) {
-		if (weight <= 0) return;
+		if (null == weight || weight <= 0) {
+			if(LOGGER.isLoggable(MLevel.SEVERE)) {
+				LOGGER.log(MLevel.SEVERE, String.format("An entry was attempted to be added to the Map with a weighting of '%d', this was ignored.", weight));
+			}
+			return;
+		}
+
 		totalWeightings += weight;
 		map.put(totalWeightings, entry);
 	}
@@ -68,6 +84,10 @@ public class WeightedMap<E> {
 	 * @return the next weighted entry from the map
 	 */
 	public E next() {
+		if(totalWeightings == 0) {
+			return(null);
+		}
+
 		int value = random.nextInt(totalWeightings);
 		return map.ceilingEntry(value).getValue();
 	}

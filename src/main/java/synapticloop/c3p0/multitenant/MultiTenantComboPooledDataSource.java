@@ -63,7 +63,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	private static final String PROPERTY_WEIGHTINGS = "weightings";
 	private static final String PROPERTY_NAMES = "names";
 
-	private static final String KEY_DEFAULT_WEIGHTED_NAME_MAP = "";
+	public static final String KEY_DEFAULT_WEIGHTED_NAME_MAP = "";
 
 	public enum Strategy {
 		ROUND_ROBIN, // just go through the connection pools, disregarding load
@@ -75,29 +75,34 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 
 	private Strategy strategy = Strategy.ROUND_ROBIN;
 	private List<String> tenants;
-	private List<ComboPooledDataSource> comboPooledDataSources = new ArrayList<ComboPooledDataSource>();
 	private List<Integer> weightings;
+	private String[] names;
+
+	private List<ComboPooledDataSource> comboPooledDataSources = new ArrayList<ComboPooledDataSource>();
+	private Map<String, ComboPooledDataSource> comboPooledDataSourceMap = new HashMap<String, ComboPooledDataSource>();
 
 	private int comboPooledDataSourcesSize;
 	private int comboPooledDataSourcesCurrent = 0;
 
 	private Map<String, MutableInt> connectionRequestHitCountMap = new HashMap<String, MutableInt>();
+	private Map<String, MutableInt> connectionRequestPoolHitCountMap = new HashMap<String, MutableInt>();
+
 	private WeightedMap<ComboPooledDataSource> weightedMap = new WeightedMap<ComboPooledDataSource>();
-	private Map<String, ComboPooledDataSource> comboPooledDataSourceMap = new HashMap<String, ComboPooledDataSource>();
 	private Map<String, WeightedMap<ComboPooledDataSource>> namedWeightMap = new HashMap<String, WeightedMap<ComboPooledDataSource>>();
 
-	private String[] names;
 
+	/**
+	 * A simple class to allow incrementing connection request hit counts
+	 * 
+	 * @author synapticloop
+	 *
+	 */
 	class MutableInt {
 		private int value = 0;
 
-		public void increment() { 
-			++value;
-		}
+		public void increment() { ++value; }
 
-		public int getValue() {
-			return value;
-		}
+		public int getValue() { return value; }
 	}
 
 	public MultiTenantComboPooledDataSource(String propertyFileLocation) {
@@ -265,7 +270,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 				} catch(IndexOutOfBoundsException ex) {
 					// we have too few weightings - log it and carry on
 					if(LOGGER.isLoggable(MLevel.SEVERE)) {
-						LOGGER.severe(String.format("Too few weightings for tenant '%s', setting it to 1", weightings.get(i)));
+						LOGGER.severe(String.format("Too few weightings for tenant '%s', setting it to 1", tenants.get(i)));
 					}
 					weightedMap.add(1, comboPooledDataSourceMap.get(tenant));
 				}
@@ -304,7 +309,10 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 					LOGGER.info(String.format("Inserted new entry into weighted map for tenant pool '%s', for tenant '%s'", name, tenant));
 				}
 
-				namedWeightMap.put(KEY_DEFAULT_WEIGHTED_NAME_MAP, weightedMap);
+				namedWeightMap.put(name, weightedMap);
+				if(!connectionRequestPoolHitCountMap.containsKey(name)) {
+					connectionRequestPoolHitCountMap.put(name, new MutableInt());
+				}
 			}
 
 			if(names.length > tenants.size()) {
@@ -323,6 +331,9 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		}
 
 		comboPooledDataSourcesSize = comboPooledDataSources.size();
+		if(LOGGER.isLoggable(MLevel.INFO)) {
+			LOGGER.log(MLevel.INFO, String.format("Created %s using strategy of '%s'", MultiTenantComboPooledDataSource.class.getSimpleName(), this.strategy));
+		}
 	}
 
 	/**
@@ -347,10 +358,48 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 			return(getSerialConnection());
 		case WEIGHTED:
 			return(getWeightedConnection());
+		case NAMED:
+			return(getNamedConnection());
 		default:
 			throw new SQLException(String.format("Could not determine the strategy for connections, was looking for '%s'", strategy.toString()));
 		}
 	}
+
+	/**
+	 * 
+	 * @param poolName the name of the pool to get a connection from
+	 * 
+	 * @return the connection form the pool
+	 * @throws SQLException if there was an error getting a connection
+	 */
+	public Connection getConnection(String poolName) throws SQLException {
+		if(LOGGER.isLoggable(MLevel.DEBUG)) {
+			LOGGER.log(MLevel.DEBUG, String.format("'%s' connection requested with pool name '%s'", this.strategy.toString(), poolName));
+		}
+
+		switch(this.strategy) {
+		case ROUND_ROBIN:
+		case LOAD_BALANCED:
+		case SERIAL:
+		case WEIGHTED:
+			if(LOGGER.isLoggable(MLevel.SEVERE)) {
+				LOGGER.log(MLevel.SEVERE, String.format("Cannot get a named connection of '%s' as the '%s' strategy does not support it.", this.strategy.toString(), Strategy.NAMED.toString()));
+			}
+			return(null);
+		case NAMED:
+			if(namedWeightMap.containsKey(poolName)) {
+				ComboPooledDataSource comboPooledDataSource = namedWeightMap.get(poolName).next();
+				incrementRequestPoolHitCountMap(poolName);
+				incrementRequestHitCountMap(comboPooledDataSource);
+				return(comboPooledDataSource.getConnection());
+			} else {
+				throw new SQLException(String.format("Could not find the named pool for name '%s'", poolName));
+			}
+		default:
+			throw new SQLException(String.format("Could not determine the strategy for connections, was looking for '%s'", strategy.toString()));
+		}
+	}
+
 
 	/**
 	 * Get a round robin connection to the underlying database pools.  The round
@@ -401,7 +450,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 
 		try {
 			for (ComboPooledDataSource comboPooledDataSource : comboPooledDataSources) {
-				// TODO - we don'e really want to fail on this one... - need to split out try/catch
+				// TODO - we don't really want to fail on this one... - need to split out try/catch
 				int numBusyConnections = comboPooledDataSource.getNumBusyConnections();
 				if(numBusyConnections > maxBusyConnections) {
 					maxBusyConnections = numBusyConnections;
@@ -428,8 +477,20 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	 */
 	private Connection getWeightedConnection() throws SQLException {
 		ComboPooledDataSource comboPooledDataSource = weightedMap.next();
-		incrementRequestHitCountMap(comboPooledDataSource);
-		return(comboPooledDataSource.getConnection());
+		if(null != comboPooledDataSource) {
+			incrementRequestHitCountMap(comboPooledDataSource);
+			return(comboPooledDataSource.getConnection());
+		} else {
+			return(null);
+		}
+	}
+
+	private Connection getNamedConnection() throws SQLException {
+		if(LOGGER.isLoggable(MLevel.SEVERE)) {
+			LOGGER.log(MLevel.SEVERE, String.format("Called getConnection() where the strategy is '%s', reverting to strategy '%s'", Strategy.NAMED, Strategy.ROUND_ROBIN));
+		}
+
+		return(getRoundRobinConnection());
 	}
 
 	/**
@@ -438,7 +499,19 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	 * @param comboPooledDataSource the combo pool to increment the hit for
 	 */
 	private void incrementRequestHitCountMap(ComboPooledDataSource comboPooledDataSource) {
+		if(null == comboPooledDataSource) {
+			return;
+		}
 		connectionRequestHitCountMap.get(comboPooledDataSource.getDataSourceName()).increment();
+	}
+
+	/**
+	 * Increment the number of hits for the request to the named pool
+	 * 
+	 * @param The name to update
+	 */
+	private void incrementRequestPoolHitCountMap(String name) {
+		connectionRequestPoolHitCountMap.get(name).increment();
 	}
 
 	/**
@@ -456,6 +529,14 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		return(-1);
 	}
 
+	public int getRequestPoolCountForName(String name) {
+		if(connectionRequestPoolHitCountMap.containsKey(name)) {
+			return(connectionRequestPoolHitCountMap.get(name).getValue());
+		}
+
+		return(-1);
+	}
+
 	public Reference getReference() throws NamingException {
 		return REFERENCE_MAKER.createReference(this);
 	}
@@ -466,5 +547,12 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	 * @return the strategy for the combo pool
 	 */
 	public Strategy getStrategy() { return(this.strategy); }
+
+	/**
+	 * Get the total number of weightings for the weighted map.  If the strategy 
+	 * is not set to WEIGHTED, then this will return 0;
+	 * 
+	 * @return the total weightings for the weighted map
+	 */
 	public int getTotalWeightings() { return(weightedMap.getTotalWeightings()); }
 }

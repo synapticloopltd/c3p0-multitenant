@@ -49,11 +49,20 @@ public class WeightedTest extends BaseTest {
 		int four = multiTenantComboPooledDataSource.getRequestCountForTenant("four");
 
 		// allowing variance - there will be more variance with the smaller 
-		// weightings
-		assertTrue(one > 50 && one < 70);
-		assertTrue(two > 15 && two < 35);
-		assertTrue(three > 5 && three < 15);
-		assertTrue(four > 2 && four < 8);
-
+		// weightings - doesn't test that the weightings are correct, just that
+		// they are in the correct order
+		assertTrue(one > two);
+		assertTrue(two > three);
+		assertTrue(three > four);
+		assertTrue(four > 0);
+	}
+	
+	@Test
+	public void testZeroWeighting() throws SQLException {
+		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, ZERO_WEIGHTINGS);
+		assertEquals(0, multiTenantComboPooledDataSource.getTotalWeightings());
+		for(int i = 0; i < 10; i++) {
+			assertNull(multiTenantComboPooledDataSource.getConnection());
+		}
 	}
 }

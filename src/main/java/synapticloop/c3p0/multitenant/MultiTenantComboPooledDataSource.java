@@ -41,7 +41,7 @@ import com.mchange.v2.naming.JavaBeanReferenceMaker;
  * This is a multi tenant connection pool for connections to a variety of 
  * sources, this was developed primarily for cockroachDB (see
  * https://www.cockroachlabs.com/ for more details) although any multi tenanted
- * polls that need to connect to multiple databases that all hold the same 
+ * pools that need to connect to multiple databases that all hold the same 
  * data will work.
  * 
  * @author synapticloop
@@ -163,7 +163,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 					}
 					propertyNames = KEY_DEFAULT_WEIGHTED_NAME_MAP;
 				}
-				this.names = propertyNames.split(propertyNames);
+				this.names = propertyNames.split(",");
 				break;
 			case SERIAL:
 				// fall-through ignore

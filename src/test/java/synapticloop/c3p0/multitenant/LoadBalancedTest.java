@@ -47,20 +47,4 @@ public class LoadBalancedTest extends BaseTest {
 		assertTrue(multiTenantComboPooledDataSource.getRequestCountForTenant(TENANTS.get(3)) < 300);
 	}
 
-//	@Test
-//	public void testSerialAllPoolsStrategy() throws SQLException {
-//		ExecutorService executor = Executors.newCachedThreadPool();
-//		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.SERIAL);
-//		for(int i = 0; i < 9; i++) {
-//			Connection connection = multiTenantComboPooledDataSource.getConnection();
-//			assertNotNull(connection);
-//
-//			executor.submit(new SlowQueryThread(connection));
-//		}
-//
-//		assertEquals(3, multiTenantComboPooledDataSource.getRequestCountForTenant(TENANTS.get(0)));
-//		assertEquals(2, multiTenantComboPooledDataSource.getRequestCountForTenant(TENANTS.get(1)));
-//		assertEquals(2, multiTenantComboPooledDataSource.getRequestCountForTenant(TENANTS.get(2)));
-//		assertEquals(2, multiTenantComboPooledDataSource.getRequestCountForTenant(TENANTS.get(3)));
-//	}
 }

@@ -52,11 +52,11 @@ public class NamedTest extends BaseTest {
 	@Test
 	public void testGetNonNamedPool() throws SQLException {
 		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, NAMES);
-		
+
 		// this will revert to round robin and get the first one
 		Connection connection = multiTenantComboPooledDataSource.getConnection();
 		connection.close();
-		
+
 		assertEquals(1, multiTenantComboPooledDataSource.getRequestCountForTenant("one"));
 	}
 }

@@ -55,7 +55,11 @@ The property file required for this strategy is listed below:
 
 
 
-```# strategy can be one of
+
+
+```
+
+# strategy can be one of
 #
 #  ROUND_ROBIN
 #  LOAD_BALANCED
@@ -71,7 +75,11 @@ strategy=LOAD_BALANCED
 #
 tenants=one,two,three,four
 
+
+
 ```
+
+
 ## NAMED
 
 This strategy allows you to pool the pool of connection pools by name.  As an example, you may have `read` only databases that your web application mainly uses, whilst you may have `write` databases that is used by the back end system.
@@ -119,7 +127,11 @@ __Note that the property file is loaded from the classpath and can be named anyt
 The property file required for this strategy is listed below:
 
 
-```# strategy can be one of
+
+
+```
+
+# strategy can be one of
 #
 #  ROUND_ROBIN
 #  LOAD_BALANCED
@@ -157,7 +169,11 @@ tenants=one,two,three,four
 #
 names=read,read,read,write
 
+
+
 ```
+
+
 ## ROUND_ROBIN
 
 This is the default strategy for the multi tenanted pool and simply round robins the connection requests through all of the pools of connection pools
@@ -196,7 +212,11 @@ __Note that the property file is loaded from the classpath and can be named anyt
 The property file required for this strategy is listed below:
 
 
-```# strategy can be one of
+
+
+```
+
+# strategy can be one of
 #
 #  ROUND_ROBIN
 #  LOAD_BALANCED
@@ -211,7 +231,11 @@ strategy=ROUND_ROBIN
 # This is a list of tenants -i.e. named configurations for the c3p0 configuration
 #
 tenants=one,two,three,four
+
+
 ```
+
+
 ## SERIAL
 
 This strategy chooses connections based on the number of busy connections, it will try and fill up all of the connection pool for the first available pool of conneciton pools.  Once this pool has been exhausted, it will move on to the next one (and so on for all of the available pools of connection pools).  Once the connections are freed from the earlier pools, it will re-use them.
@@ -240,7 +264,11 @@ Connection connection = multiTenantComboPooledDataSource.getConnection();
 ```
 
 
-```# strategy can be one of
+
+
+```
+
+# strategy can be one of
 #
 #  ROUND_ROBIN
 #  LOAD_BALANCED
@@ -256,7 +284,11 @@ strategy=SERIAL
 #
 tenants=one,two,three,four
 
+
+
 ```
+
+
 ## WEIGHTED
 
 This strategy allows you to weight certain connections for more use, than others, you are required to add in the weightings, or they will be equally weighted - in effect giving all of the pools of connection pools equal chance to be selected for usage.
@@ -315,7 +347,11 @@ __Note that the property file is loaded from the classpath and can be named anyt
 The property file required for this strategy is listed below:
 
 
-```# strategy can be one of
+
+
+```
+
+# strategy can be one of
 #
 #  ROUND_ROBIN
 #  LOAD_BALANCED
@@ -349,7 +385,11 @@ tenants=one,two,three,four
 
 weightings=60,25,10,5
 
+
+
 ```
+
+
 
 # Building the Package
 

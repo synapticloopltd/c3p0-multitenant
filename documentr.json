@@ -12,29 +12,29 @@
 		{ "type":"inbuilt", "value":"project-description" },
 
 		{ "type":"file", "value":"src/docs/load-balanced-strategy.md" },
-		{ "type": "markup", "value": "```" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
 		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.load_balanced.properties" },
-		{ "type": "markup", "value": "```" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
 
 		{ "type":"file", "value":"src/docs/named-strategy.md" },
-		{ "type": "markup", "value": "```" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
 		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.named.properties" },
-		{ "type": "markup", "value": "```" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
 
 		{ "type":"file", "value":"src/docs/round-robin-strategy.md" },
-		{ "type": "markup", "value": "```" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
 		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.round_robin.properties" },
-		{ "type": "markup", "value": "```" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
 
 		{ "type":"file", "value":"src/docs/serial-strategy.md" },
-		{ "type": "markup", "value": "```" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
 		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.serial.properties" },
-		{ "type": "markup", "value": "```" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
 
 		{ "type":"file", "value":"src/docs/weighted-strategy.md" },
-		{ "type": "markup", "value": "```" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
 		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.weighted.properties" },
-		{ "type": "markup", "value": "```" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
 
 
 

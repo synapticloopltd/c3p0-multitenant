@@ -246,14 +246,14 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 
 		for (String tenant : tenants) {
 			if(isDebugEnabled) {
-				LOGGER.log(MLevel.DEBUG, String.format("Creating connection pool for tenant '%s'", tenant));
+				LOGGER.log(MLevel.DEBUG, String.format("Creating multi-tenant connection pool for tenant '%s'", tenant));
 			}
 
 			ComboPooledDataSource comboPooledDataSource = new ComboPooledDataSource(tenant);
 			comboPooledDataSourceMap.put(tenant, comboPooledDataSource);
 
 			if(isDebugEnabled) {
-				LOGGER.log(MLevel.DEBUG, String.format("Created connection pool for tenant '%s'", tenant));
+				LOGGER.log(MLevel.DEBUG, String.format("Created multi-tenant connection pool for tenant '%s'", tenant));
 			}
 
 			// now set up all of the data structures

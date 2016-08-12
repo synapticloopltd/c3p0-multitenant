@@ -42,4 +42,21 @@ public class NamedTest extends BaseTest {
 		assertEquals(1, multiTenantComboPooledDataSource.getRequestPoolCountForName(NAME_READ));
 		assertEquals(1, multiTenantComboPooledDataSource.getRequestPoolCountForName(NAME_WRITE));
 	}
+
+	@Test(expected = SQLException.class)
+	public void testGetIncorrectNamedPool() throws SQLException {
+		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, NAMES);
+		multiTenantComboPooledDataSource.getConnection("this is an incorrect pool name");
+	}
+
+	@Test
+	public void testGetNonNamedPool() throws SQLException {
+		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, NAMES);
+		
+		// this will revert to round robin and get the first one
+		Connection connection = multiTenantComboPooledDataSource.getConnection();
+		connection.close();
+		
+		assertEquals(1, multiTenantComboPooledDataSource.getRequestCountForTenant("one"));
+	}
 }

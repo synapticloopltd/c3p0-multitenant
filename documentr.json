@@ -1,15 +1,26 @@
 {
 	"context": {
+		"dependencyLocation": "bintray"
 	},
 	"templates": [
 		{ "type":"inbuilt", "value":"jvm-compatability" },
+
+		{ "type":"inbuilt", "value":"badge-bintray" },
+		{ "type":"inbuilt", "value":"badge-shield-io-github-release" },
+
 		{ "type":"inbuilt", "value":"project-name" },
 		{ "type":"inbuilt", "value":"project-description" },
 
 		{ "type":"inbuilt", "value":"gradle-build" },
 		{ "type":"inbuilt", "value":"gradle-test" },
 
+		{ "type":"inbuilt", "value":"publishing-github" },
+
+		{ "type":"inbuilt", "value":"publishing-bintray" },
+
 		{ "type":"inbuilt", "value":"dependencies" },
+
+		{ "type":"inbuilt", "value":"license-mit" },
 
 		{ "type":"inbuilt", "value":"attribution" }
 	]

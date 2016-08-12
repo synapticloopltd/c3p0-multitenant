@@ -24,7 +24,7 @@ group = 'synapticloop'
 archivesBaseName = 'c3p0-multitenant'
 description = """Multi tenanted c3p0 pool"""
 
-version = '0.0.1'
+version = '1.0.0'
 
 
 sourceCompatibility = 1.7
@@ -153,7 +153,7 @@ publishing {
 
 
 github {
-	owner = group
+	owner = 'synapticloopltd'
 	repo = archivesBaseName
 	if(System.getenv('GITHUB_TOKEN')) {
 		token = System.getenv('GITHUB_TOKEN')
@@ -178,5 +178,7 @@ bintray {
 		repo = 'maven'
 		name = 'c3p0-multitenant'
 	}
-
 }
+
+build.finalizedBy(project.tasks.cobertura)
+build.finalizedBy(project.tasks.documentr)

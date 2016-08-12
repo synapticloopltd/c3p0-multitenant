@@ -63,7 +63,7 @@ public class WeightedMap<E> {
 	 * Add a new entry into the weighted map.  If the weight is less than ot 
 	 * equal to 0, then it will log an error and ignore adding it to the map.
 	 * 
-	 * @param weight the weight to add (__MUST__ be > 0 to be added)
+	 * @param weight the weight to add (__MUST__ be greater than 0 to be added)
 	 * @param entry the entry the entry to add to the map with the weight
 	 */
 	public void add(Integer weight, E entry) {

@@ -8,6 +8,8 @@ import javax.naming.NamingException;
 
 import org.junit.Test;
 
+import synapticloop.c3p0.multitenant.MultiTenantComboPooledDataSource.Strategy;
+
 public class MultiTenantComboPooledDataSourceTest extends BaseTest {
 
 	@Test
@@ -22,5 +24,26 @@ public class MultiTenantComboPooledDataSourceTest extends BaseTest {
 	public void testGetReference() throws NamingException {
 		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource();
 		assertNotNull(multiTenantComboPooledDataSource.getReference());
+	}
+
+	@Test
+	public void testWrongStrategyForNamedPool() throws SQLException {
+		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, WEIGHTINGS);
+
+		assertNull(multiTenantComboPooledDataSource.getConnection("something-which-doesn't-exist"));
+
+		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.ROUND_ROBIN);
+		assertNull(multiTenantComboPooledDataSource.getConnection("something-which-doesn't-exist"));
+
+		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.LOAD_BALANCED);
+		assertNull(multiTenantComboPooledDataSource.getConnection("something-which-doesn't-exist"));
+
+		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.SERIAL);
+		assertNull(multiTenantComboPooledDataSource.getConnection("something-which-doesn't-exist"));
+	}
+	
+	@Test
+	public void testLoadBalanacedPropertiesTest() {
+		
 	}
 }

@@ -20,28 +20,45 @@ import static org.junit.Assert.*;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.junit.Test;
 
 import synapticloop.c3p0.multitenant.MultiTenantComboPooledDataSource.Strategy;
+import synapticloop.c3p0.multitenant.util.SlowQueryThread;
 
 public class SerialTest extends BaseTest {
 
 	@Test
 	public void testSerialStrategy() throws SQLException {
+		ExecutorService executor = Executors.newCachedThreadPool();
 		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.SERIAL);
 		for(int i = 0; i < 4; i++) {
 			Connection connection = multiTenantComboPooledDataSource.getConnection();
 			assertNotNull(connection);
 
-			//assertEquals(1, multiTenantComboPooledDataSource.getRequestCountForTenant(TENANTS.get(i)));
-
-			connection.close();
+			executor.submit(new SlowQueryThread(connection));
 		}
 
-		for (String tenant : TENANTS) {
-			assertTrue(true);
-//			assertEquals(1, multiTenantComboPooledDataSource.getRequestCountForTenant(tenant));
+		assertEquals(2, multiTenantComboPooledDataSource.getRequestCountForTenant(TENANTS.get(0)));
+		assertEquals(2, multiTenantComboPooledDataSource.getRequestCountForTenant(TENANTS.get(1)));
+	}
+
+	@Test
+	public void testSerialAllPoolsStrategy() throws SQLException {
+		ExecutorService executor = Executors.newCachedThreadPool();
+		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.SERIAL);
+		for(int i = 0; i < 9; i++) {
+			Connection connection = multiTenantComboPooledDataSource.getConnection();
+			assertNotNull(connection);
+
+			executor.submit(new SlowQueryThread(connection));
 		}
+
+		assertEquals(3, multiTenantComboPooledDataSource.getRequestCountForTenant(TENANTS.get(0)));
+		assertEquals(2, multiTenantComboPooledDataSource.getRequestCountForTenant(TENANTS.get(1)));
+		assertEquals(2, multiTenantComboPooledDataSource.getRequestCountForTenant(TENANTS.get(2)));
+		assertEquals(2, multiTenantComboPooledDataSource.getRequestCountForTenant(TENANTS.get(3)));
 	}
 }

@@ -423,9 +423,16 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	}
 
 	/**
-	 * Get a serial connection
-	 * @return
-	 * @throws SQLException
+	 * Get a serial connection, this will go through the connection pools and
+	 * assign a connection up to the maxPoolSize for that pool.  If the pool
+	 * is full, it will move on to the next connection pool.
+	 * 
+	 * If all connection pools are busy, it will return a connection from the
+	 * first pool, regardless of whether it is busy or not.
+	 * 
+	 * @return the connection 
+	 * 
+	 * @throws SQLException if there was an error with the connection
 	 */
 	private synchronized Connection getSerialConnection() throws SQLException {
 		for (ComboPooledDataSource comboPooledDataSource : comboPooledDataSources) {
@@ -450,18 +457,30 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 
 		try {
 			for (ComboPooledDataSource comboPooledDataSource : comboPooledDataSources) {
-				// TODO - we don't really want to fail on this one... - need to split out try/catch
+				// TODO - do we really want to fail on this one... - may need to split out try/catch
 				int numBusyConnections = comboPooledDataSource.getNumBusyConnections();
-				if(numBusyConnections > maxBusyConnections) {
-					maxBusyConnections = numBusyConnections;
-				} else {
+				System.out.print(numBusyConnections + ":");
+				if(numBusyConnections == 0) {
 					readyPoolIndex = poolIndex;
+					break;
+				} else {
+
+					if(numBusyConnections > maxBusyConnections) {
+						// here we don't want to choose it
+						maxBusyConnections = numBusyConnections;
+					} else if(numBusyConnections != maxBusyConnections) {
+						// here the num busy isn't the same, so we assign
+						readyPoolIndex = poolIndex;
+					}
+
+					poolIndex++;
+
 				}
-				poolIndex++;
 			}
 
 			ComboPooledDataSource comboPooledDataSource = comboPooledDataSources.get(readyPoolIndex);
 			dataSourceName = comboPooledDataSource.getDataSourceName();
+			incrementRequestHitCountMap(comboPooledDataSource);
 			return(comboPooledDataSource.getConnection());
 		} catch (SQLException ex) {
 			throw new SQLException(String.format("Could not get a connection to data source name '%s'", dataSourceName), ex);

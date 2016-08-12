@@ -49,9 +49,12 @@ import com.mchange.v2.naming.JavaBeanReferenceMaker;
  */
 public class MultiTenantComboPooledDataSource implements Serializable, Referenceable {
 	private static final long serialVersionUID = -8817106257353513000L;
+	private static final MLogger LOGGER;
+	static {
+		LOGGER = MLog.getLogger(MultiTenantComboPooledDataSource.class);
+	}
 
 	private static final JavaBeanReferenceMaker REFERENCE_MAKER = new com.mchange.v2.naming.JavaBeanReferenceMaker();
-	private static final MLogger LOGGER;
 
 	private static final String C3P0_MULTITENANT_PROPERTIES = "/c3p0.multitenant.properties";
 
@@ -60,9 +63,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	private static final String PROPERTY_WEIGHTINGS = "weightings";
 	private static final String PROPERTY_NAMES = "names";
 
-	static {
-		LOGGER = MLog.getLogger(MultiTenantComboPooledDataSource.class);
-	}
+	private static final String KEY_DEFAULT_WEIGHTED_NAME_MAP = "";
 
 	public enum Strategy {
 		ROUND_ROBIN, // just go through the connection pools, disregarding load
@@ -133,7 +134,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 					if(LOGGER.isLoggable(MLevel.SEVERE)) {
 						LOGGER.log(MLevel.SEVERE, String.format("A strategy of '%s' was requested, yet no property '%s' was supplied, all weightings will be set to 1", Strategy.WEIGHTED.toString(), PROPERTY_WEIGHTINGS));
 					}
-					propertyWeightings = "";
+					propertyWeightings = KEY_DEFAULT_WEIGHTED_NAME_MAP;
 				}
 
 				String[] splits = propertyWeightings.split(",");
@@ -155,7 +156,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 					if(LOGGER.isLoggable(MLevel.SEVERE)) {
 						LOGGER.log(MLevel.SEVERE, String.format("A strategy of '%s' was requested, yet no property '%s' was supplied, all names will be set to the same empty string", Strategy.NAMED.toString(), PROPERTY_NAMES));
 					}
-					propertyNames = "";
+					propertyNames = KEY_DEFAULT_WEIGHTED_NAME_MAP;
 				}
 				this.names = propertyNames.split(propertyNames);
 				break;
@@ -230,7 +231,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		this.names = names;
 
 		// This must always be the weighted strategy
-		this.strategy = Strategy.WEIGHTED;
+		this.strategy = Strategy.NAMED;
 
 		initialiseMultiTenantPools();
 	}
@@ -258,14 +259,15 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		switch (this.strategy) {
 		case WEIGHTED:
 			for(int i = 0; i < tenants.size(); i++) {
+				String tenant = tenants.get(i);
 				try {
-					weightedMap.add(weightings.get(i), comboPooledDataSourceMap.get(tenants.get(i)));
+					weightedMap.add(weightings.get(i), comboPooledDataSourceMap.get(tenant));
 				} catch(IndexOutOfBoundsException ex) {
 					// we have too few weightings - log it and carry on
 					if(LOGGER.isLoggable(MLevel.SEVERE)) {
-						LOGGER.severe(String.format("Could not determine the weighting for pool '%s', setting it to 1", tenants.get(i)));
+						LOGGER.severe(String.format("Too few weightings for tenant '%s', setting it to 1", weightings.get(i)));
 					}
-					weightedMap.add(1, comboPooledDataSourceMap.get(tenants.get(i)));
+					weightedMap.add(1, comboPooledDataSourceMap.get(tenant));
 				}
 			}
 
@@ -276,9 +278,47 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 			}
 			break;
 		case NAMED:
+			for(int i = 0; i < tenants.size(); i++) {
+
+				String tenant = tenants.get(i);
+
+				String name = "";
+				try {
+					name = names[i];
+				} catch(ArrayIndexOutOfBoundsException ex) {
+					if(LOGGER.isLoggable(MLevel.SEVERE)) {
+						LOGGER.severe(String.format("Too few names for tenant '%s', adding it to the default pool '%s'", tenant, KEY_DEFAULT_WEIGHTED_NAME_MAP));
+					}
+				}
+
+				WeightedMap<ComboPooledDataSource> weightedMap = namedWeightMap.get(name);
+				if(null == weightedMap) {
+					weightedMap = new WeightedMap<ComboPooledDataSource>();
+					if(LOGGER.isLoggable(MLevel.INFO)) {
+						LOGGER.info(String.format("Created new weighted map for tenant pool '%s'", name));
+					}
+				}
+				weightedMap.add(1, comboPooledDataSourceMap.get(tenants.get(i)));
+
+				if(LOGGER.isLoggable(MLevel.INFO)) {
+					LOGGER.info(String.format("Inserted new entry into weighted map for tenant pool '%s', for tenant '%s'", name, tenant));
+				}
+
+				namedWeightMap.put(KEY_DEFAULT_WEIGHTED_NAME_MAP, weightedMap);
+			}
+
+			if(names.length > tenants.size()) {
+				if(LOGGER.isLoggable(MLevel.SEVERE)) {
+					LOGGER.severe(String.format("I received '%d' names for the '%d' tenants, ignoring extra names...", names.length, tenants.size()));
+				}
+			}
 			break;
+		case SERIAL:
+		case LOAD_BALANCED:
+		case ROUND_ROBIN:
 		default:
 			// no extra processing for other strategies
+			// TODO - want a catch clause here for any strategies that we don't pick up
 			break;
 		}
 

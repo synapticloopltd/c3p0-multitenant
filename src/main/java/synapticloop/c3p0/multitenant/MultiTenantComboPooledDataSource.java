@@ -57,7 +57,8 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 
 	private static final String PROPERTY_STRATEGY = "strategy";
 	private static final String PROPERTY_TENANTS = "tenants";
-	private static final String PROPERTY_WEIGHTING = "weighting";
+	private static final String PROPERTY_WEIGHTINGS = "weightings";
+	private static final String PROPERTY_NAMES = "names";
 
 	static {
 		LOGGER = MLog.getLogger(MultiTenantComboPooledDataSource.class);
@@ -66,11 +67,9 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	public enum Strategy {
 		ROUND_ROBIN, // just go through the connection pools, disregarding load
 		LOAD_BALANCED, // get the lowest number of connections and use this pool
-		SERIAL, // use up all of the first connections, going to the next one when 
-		// full
+		SERIAL, // use up all of the first connections, going to the next one when full
 		WEIGHTED, // weight the connections, from the passed in values
-		NAMED // get a connection from one of the named pools, there may be more
-		//than one pool per name, they will be weighted between them
+		NAMED // get a connection from one of the named pools, there may be more than one pool per name, they will be weighted between them
 	}
 
 	private Strategy strategy = Strategy.ROUND_ROBIN;
@@ -84,6 +83,9 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	private Map<String, MutableInt> connectionRequestHitCountMap = new HashMap<String, MutableInt>();
 	private WeightedMap<ComboPooledDataSource> weightedMap = new WeightedMap<ComboPooledDataSource>();
 	private Map<String, ComboPooledDataSource> comboPooledDataSourceMap = new HashMap<String, ComboPooledDataSource>();
+	private Map<String, WeightedMap<ComboPooledDataSource>> namedWeightMap = new HashMap<String, WeightedMap<ComboPooledDataSource>>();
+
+	private String[] names;
 
 	class MutableInt {
 		private int value = 0;
@@ -97,13 +99,13 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		}
 	}
 
-	public MultiTenantComboPooledDataSource() {
+	public MultiTenantComboPooledDataSource(String propertyFileLocation) {
 		// try and load the c3p0.multitenant.properties
 		Properties properties = new Properties();
 		try {
-			properties.load(MultiTenantComboPooledDataSource.class.getResourceAsStream(C3P0_MULTITENANT_PROPERTIES));
+			properties.load(MultiTenantComboPooledDataSource.class.getResourceAsStream(propertyFileLocation));
 			// at this point we are looking for tenants and the strategy
-			Strategy.valueOf(properties.getProperty(PROPERTY_STRATEGY, Strategy.ROUND_ROBIN.toString()));
+			this.strategy = Strategy.valueOf(properties.getProperty(PROPERTY_STRATEGY, Strategy.ROUND_ROBIN.toString()));
 
 			String propertyTenant = properties.getProperty(PROPERTY_TENANTS, null);
 			if(null == propertyTenant) {
@@ -122,14 +124,68 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 			}
 
 			this.tenants = Arrays.asList(propertyTenants);
+
+			// now get the weightings
+			switch (this.strategy) {
+			case WEIGHTED:
+				String propertyWeightings = properties.getProperty(PROPERTY_WEIGHTINGS, null);
+				if(null == propertyWeightings) {
+					if(LOGGER.isLoggable(MLevel.SEVERE)) {
+						LOGGER.log(MLevel.SEVERE, String.format("A strategy of '%s' was requested, yet no property '%s' was supplied, all weightings will be set to 1", Strategy.WEIGHTED.toString(), PROPERTY_WEIGHTINGS));
+					}
+					propertyWeightings = "";
+				}
+
+				String[] splits = propertyWeightings.split(",");
+				weightings = new ArrayList<Integer>();
+				for (String split : splits) {
+					try {
+						weightings.add(new Integer(split.trim()));
+					} catch(NumberFormatException ex) {
+						if(LOGGER.isLoggable(MLevel.SEVERE)) {
+							LOGGER.log(MLevel.SEVERE, String.format("Could not convert the weighting of '%s' to an integer, setting the weighting to 1", split));
+						}
+						weightings.add(1);
+					}
+				}
+				break;
+			case NAMED:
+				String propertyNames = properties.getProperty(PROPERTY_NAMES, null);
+				if(null == propertyNames) {
+					if(LOGGER.isLoggable(MLevel.SEVERE)) {
+						LOGGER.log(MLevel.SEVERE, String.format("A strategy of '%s' was requested, yet no property '%s' was supplied, all names will be set to the same empty string", Strategy.NAMED.toString(), PROPERTY_NAMES));
+					}
+					propertyNames = "";
+				}
+				this.names = propertyNames.split(propertyNames);
+				break;
+			case SERIAL:
+				// fall-through ignore
+			case LOAD_BALANCED:
+				// fall-through ignore
+			case ROUND_ROBIN:
+				// fall-through ignore
+			default:
+				break;
+			}
+
 		} catch (IOException ex) {
 			if(LOGGER.isLoggable(MLevel.SEVERE)) {
-				LOGGER.log(MLevel.SEVERE, "Could not load c3p0.multitenant.properties file", ex);
+				LOGGER.log(MLevel.SEVERE, String.format("Could not find the '%s' file", propertyFileLocation), ex);
 			}
 		}
 
 		// finally we are ready to initialise the tenants
 		initialiseMultiTenantPools();
+
+	}
+
+	/**
+	 * Initialise the multi tenant combo pool using the default file to be found
+	 * on the classpath - default "/c3p0.multitenant.properties"
+	 */
+	public MultiTenantComboPooledDataSource() {
+		this(C3P0_MULTITENANT_PROPERTIES);
 	}
 
 	/**
@@ -169,6 +225,16 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		initialiseMultiTenantPools();
 	}
 
+	public MultiTenantComboPooledDataSource(List<String> tenants, String[] names) {
+		this.tenants = tenants;
+		this.names = names;
+
+		// This must always be the weighted strategy
+		this.strategy = Strategy.WEIGHTED;
+
+		initialiseMultiTenantPools();
+	}
+
 	private void initialiseMultiTenantPools() {
 		boolean isDebugEnabled = LOGGER.isLoggable(MLevel.DEBUG);
 
@@ -189,7 +255,8 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 			connectionRequestHitCountMap.put(tenant, new MutableInt());
 		}
 
-		if(this.strategy == Strategy.WEIGHTED) {
+		switch (this.strategy) {
+		case WEIGHTED:
 			for(int i = 0; i < tenants.size(); i++) {
 				try {
 					weightedMap.add(weightings.get(i), comboPooledDataSourceMap.get(tenants.get(i)));
@@ -204,22 +271,27 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 
 			if(weightings.size() > tenants.size()) {
 				if(LOGGER.isLoggable(MLevel.SEVERE)) {
-					// TODO - need to add in the numbers here
-					LOGGER.severe(String.format("I received 'int' weightings for the 'int' tenants, ignoring extra weightings..."));
+					LOGGER.severe(String.format("I received '%d' weightings for the '%d' tenants, ignoring extra weightings...", weightings.size(), tenants.size()));
 				}
 			}
+			break;
+		case NAMED:
+			break;
+		default:
+			// no extra processing for other strategies
+			break;
 		}
 
 		comboPooledDataSourcesSize = comboPooledDataSources.size();
 	}
 
 	/**
-	 * Get a connection from one of the poolsl this will depend on the pool that 
-	 * was chosen when instatiation occurred
+	 * Get a connection from one of the pools this will depend on the pool that 
+	 * was chosen when instantiation occurred
 	 * 
-	 * @return the connection to one of the tennants
+	 * @return the connection to one of the tenants
 	 * 
-	 * @throws SQLException if there was en error getting a connection
+	 * @throws SQLException if there was an error getting a connection
 	 */
 	public Connection getConnection() throws SQLException {
 		if(LOGGER.isLoggable(MLevel.DEBUG)) {

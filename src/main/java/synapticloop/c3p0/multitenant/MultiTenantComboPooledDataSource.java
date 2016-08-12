@@ -75,7 +75,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 
 	private Strategy strategy = Strategy.ROUND_ROBIN;
 	private List<String> tenants;
-	private List<Integer> weightings;
+	private List<Integer> weightings = new ArrayList<Integer>();
 	private String[] names;
 
 	private List<ComboPooledDataSource> comboPooledDataSources = new ArrayList<ComboPooledDataSource>();

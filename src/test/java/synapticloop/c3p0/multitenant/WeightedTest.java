@@ -7,7 +7,15 @@ import java.sql.SQLException;
 
 import org.junit.Test;
 
+import synapticloop.c3p0.multitenant.MultiTenantComboPooledDataSource.Strategy;
+
 public class WeightedTest extends BaseTest {
+
+	@Test
+	public void testDefaultWeightings() {
+		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.WEIGHTED);
+		assertEquals(4, multiTenantComboPooledDataSource.getTotalWeightings());
+	}
 
 	@Test
 	public void testWeightedStrategy() throws SQLException {

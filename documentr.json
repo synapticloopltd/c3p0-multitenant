@@ -1,6 +1,7 @@
 {
 	"context": {
-		"dependencyLocation": "bintray"
+		"dependencyLocation": "bintray",
+		"group": "synapticloopltd"
 	},
 	"templates": [
 		{ "type":"inbuilt", "value":"jvm-compatability" },
@@ -52,6 +53,8 @@
 
 		{ "type":"inbuilt", "value":"gradle-build" },
 		{ "type":"inbuilt", "value":"gradle-test" },
+
+		{ "type": "file", "value": "src/docs/testing.md" },
 
 		{ "type":"inbuilt", "value":"publishing-github" },
 

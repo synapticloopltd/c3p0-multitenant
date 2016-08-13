@@ -3,7 +3,7 @@
 > **This project requires JVM version of at least 1.7**
 
 
-[![Download](https://api.bintray.com/packages/synapticloop/maven/c3p0-multitenant/images/download.svg)](https://bintray.com/synapticloop/maven/c3p0-multitenant/_latestVersion) [![GitHub Release](https://img.shields.io/github/release/synapticloop/c3p0-multitenant.svg)](https://github.com/synapticloop/c3p0-multitenant/releases) 
+[![Download](https://api.bintray.com/packages/synapticloopltd/maven/c3p0-multitenant/images/download.svg)](https://bintray.com/synapticloopltd/maven/c3p0-multitenant/_latestVersion) [![GitHub Release](https://img.shields.io/github/release/synapticloopltd/c3p0-multitenant.svg)](https://github.com/synapticloopltd/c3p0-multitenant/releases) 
 
 # c3p0-multitenant
 
@@ -157,6 +157,68 @@ are provided.
  - `NAMED` - randomly choose a connection from a pool of pools
 
 The strategies are detailed below in more detail:
+## ROUND_ROBIN
+
+This is the default strategy for the multi tenanted pool and simply round robins the connection requests through all of the pools of connection pools
+
+To instantiate a `ROUND_ROBIN` strategy pool and get a connection:
+
+```
+import java.sql.Connection;
+import java.util.List;
+
+import synapticloop.c3p0.multitenant.MultiTenantComboPooledDataSource;
+import synapticloop.c3p0.multitenant.MultiTenantComboPooledDataSource.Strategy;
+
+
+List<String> TENANTS = new ArrayList<String>();
+
+TENANTS.add("one");
+TENANTS.add("two");
+TENANTS.add("three");
+TENANTS.add("four");
+
+MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.ROUND_ROBIN);
+Connection connection = multiTenantComboPooledDataSource.getConnection();
+```
+
+### Property file usage
+
+Should you wish to use property files, the pool of connection pools can be instantiated thusly:
+
+```
+MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource("/c3p0.multitenant.round_robin.properties");
+```
+
+__Note that the property file is loaded from the classpath and can be named anything__
+
+The property file required for this strategy is listed below:
+
+
+
+
+```
+
+# strategy can be one of
+#
+#  ROUND_ROBIN
+#  LOAD_BALANCED
+#  SERIAL
+#  WEIGHTED
+#  NAMED
+#
+# by default, if nothing is set, the strategy will be ROUND_ROBIN
+strategy=ROUND_ROBIN
+
+#
+# This is a list of tenants -i.e. named configurations for the c3p0 configuration
+#
+tenants=one,two,three,four
+
+
+```
+
+
 ## LOAD_BALANCED
 
 This load balances the connections between all of the pools of connection pools.  This strategy looks at the busy connections on all of the pools and chooses the one based on the minimum number of busy connections.
@@ -219,162 +281,6 @@ strategy=LOAD_BALANCED
 #
 tenants=one,two,three,four
 
-
-
-```
-
-
-## NAMED
-
-This strategy allows you to pool the pool of connection pools by name.  As an example, you may have `read` only databases that your web application mainly uses, whilst you may have `write` databases that is used by the back end system.
-
-To instantiate a `WEIGHTED` strategy pool and get a connection:
-
-```
-import java.sql.Connection;
-import java.util.List;
-
-import synapticloop.c3p0.multitenant.MultiTenantComboPooledDataSource;
-import synapticloop.c3p0.multitenant.MultiTenantComboPooledDataSource.Strategy;
-
-
-List<String> TENANTS = new ArrayList<String>();
-
-TENANTS.add("one");
-TENANTS.add("two");
-TENANTS.add("three");
-TENANTS.add("four");
-
-String[] NAMES = { "read", "read", "read", "write" };
-
-MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, NAMES);
-
-# to return a connection from the 'read' pool
-Connection readConnection = multiTenantComboPooledDataSource.getConnection("read");
-
-# to return a connection from the 'write' pool
-Connection writeConnection = multiTenantComboPooledDataSource.getConnection("write");
-```
-
-If you mistakenly call `getConnection()` without passing in the named pool, you will get a `ROUND_ROBIN` connection.
-
-### Property file usage
-
-Should you wish to use property files, the pool of connection pools can be instantiated thusly:
-
-```
-MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource("/c3p0.multitenant.named.properties");
-```
-
-__Note that the property file is loaded from the classpath and can be named anything__
-
-The property file required for this strategy is listed below:
-
-
-
-
-```
-
-# strategy can be one of
-#
-#  ROUND_ROBIN
-#  LOAD_BALANCED
-#  SERIAL
-#  WEIGHTED
-#  NAMED
-#
-# by default, if nothing is set, the strategy will be ROUND_ROBIN
-strategy=NAMED
-
-#
-# This is a list of tenants -i.e. named configurations for the c3p0 configuration
-#
-tenants=one,two,three,four
-
-#
-# NOTE: This property is only used if the strategy listed above is NAMED
-#
-# The names that will be applied to the tenants.  Each of the names allow the 
-# tenants to be grouped into a sub-pool, to utilise the pool, a call to 
-# getConnection(String poolName), NOT just getConnection().  If a call to 
-# getConnection() is used, then it will return a random connection.  Within each
-# sub-pool, the connection that is retrieved is randonmly assigned.
-#
-# These __MUST__ be in the same order as the tenants listed above, i.e.:
-#
-#   one   => read
-#   two   => read
-#   three => read
-#   four  => write
-# 
-# If there are too few names, the missing names will not be added to any pool 
-# and will not be accessible.  If there are too many names, the extra names will
-# be ignored.
-#
-names=read,read,read,write
-
-
-
-```
-
-
-## ROUND_ROBIN
-
-This is the default strategy for the multi tenanted pool and simply round robins the connection requests through all of the pools of connection pools
-
-To instantiate a `ROUND_ROBIN` strategy pool and get a connection:
-
-```
-import java.sql.Connection;
-import java.util.List;
-
-import synapticloop.c3p0.multitenant.MultiTenantComboPooledDataSource;
-import synapticloop.c3p0.multitenant.MultiTenantComboPooledDataSource.Strategy;
-
-
-List<String> TENANTS = new ArrayList<String>();
-
-TENANTS.add("one");
-TENANTS.add("two");
-TENANTS.add("three");
-TENANTS.add("four");
-
-MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.ROUND_ROBIN);
-Connection connection = multiTenantComboPooledDataSource.getConnection();
-```
-
-### Property file usage
-
-Should you wish to use property files, the pool of connection pools can be instantiated thusly:
-
-```
-MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource("/c3p0.multitenant.round_robin.properties");
-```
-
-__Note that the property file is loaded from the classpath and can be named anything__
-
-The property file required for this strategy is listed below:
-
-
-
-
-```
-
-# strategy can be one of
-#
-#  ROUND_ROBIN
-#  LOAD_BALANCED
-#  SERIAL
-#  WEIGHTED
-#  NAMED
-#
-# by default, if nothing is set, the strategy will be ROUND_ROBIN
-strategy=ROUND_ROBIN
-
-#
-# This is a list of tenants -i.e. named configurations for the c3p0 configuration
-#
-tenants=one,two,three,four
 
 
 ```
@@ -546,6 +452,100 @@ weightings=60,25,10,5
 ```
 
 
+## NAMED
+
+This strategy allows you to pool the pool of connection pools by name.  As an example, you may have `read` only databases that your web application mainly uses, whilst you may have `write` databases that is used by the back end system.
+
+To instantiate a `WEIGHTED` strategy pool and get a connection:
+
+```
+import java.sql.Connection;
+import java.util.List;
+
+import synapticloop.c3p0.multitenant.MultiTenantComboPooledDataSource;
+import synapticloop.c3p0.multitenant.MultiTenantComboPooledDataSource.Strategy;
+
+
+List<String> TENANTS = new ArrayList<String>();
+
+TENANTS.add("one");
+TENANTS.add("two");
+TENANTS.add("three");
+TENANTS.add("four");
+
+String[] NAMES = { "read", "read", "read", "write" };
+
+MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, NAMES);
+
+# to return a connection from the 'read' pool
+Connection readConnection = multiTenantComboPooledDataSource.getConnection("read");
+
+# to return a connection from the 'write' pool
+Connection writeConnection = multiTenantComboPooledDataSource.getConnection("write");
+```
+
+If you mistakenly call `getConnection()` without passing in the named pool, you will get a `ROUND_ROBIN` connection.
+
+### Property file usage
+
+Should you wish to use property files, the pool of connection pools can be instantiated thusly:
+
+```
+MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource("/c3p0.multitenant.named.properties");
+```
+
+__Note that the property file is loaded from the classpath and can be named anything__
+
+The property file required for this strategy is listed below:
+
+
+
+
+```
+
+# strategy can be one of
+#
+#  ROUND_ROBIN
+#  LOAD_BALANCED
+#  SERIAL
+#  WEIGHTED
+#  NAMED
+#
+# by default, if nothing is set, the strategy will be ROUND_ROBIN
+strategy=NAMED
+
+#
+# This is a list of tenants -i.e. named configurations for the c3p0 configuration
+#
+tenants=one,two,three,four
+
+#
+# NOTE: This property is only used if the strategy listed above is NAMED
+#
+# The names that will be applied to the tenants.  Each of the names allow the 
+# tenants to be grouped into a sub-pool, to utilise the pool, a call to 
+# getConnection(String poolName), NOT just getConnection().  If a call to 
+# getConnection() is used, then it will return a random connection.  Within each
+# sub-pool, the connection that is retrieved is randonmly assigned.
+#
+# These __MUST__ be in the same order as the tenants listed above, i.e.:
+#
+#   one   => read
+#   two   => read
+#   three => read
+#   four  => write
+# 
+# If there are too few names, the missing names will not be added to any pool 
+# and will not be accessible.  If there are too many names, the extra names will
+# be ignored.
+#
+names=read,read,read,write
+
+
+
+```
+
+
 
 # Building the Package
 
@@ -590,11 +590,40 @@ if you do not have gradle installed, try:
 
 The `--info` switch will also output logging for the tests
 
+
+# Additional Testing Notes
+
+In order for the test to run, you __MUST__ have a cockroach DB setup:
+
+```
+cockroach start --store=node1 --port=26257 --http-port=8080 --background
+cockroach start --store=node2 --port=26258 --http-port=8081 --join=localhost:26257 --background
+cockroach start --store=node3 --port=26259 --http-port=8082 --join=localhost:26257 --background
+cockroach start --store=node4 --port=26260 --http-port=8083 --join=localhost:26257 --background
+```
+
+This will start 4 nodes all clustered together.
+
+Run:
+
+```
+cockroach sql
+```
+
+Then run
+
+```
+create database multitenant;
+grant all on multitenant.* to multitenant;
+```
+
+This will allow the user `multitenant` to connect to the database.
+
 # Artefact Publishing - Github
 
 This project publishes artefacts to [GitHib](https://github.com/)
 
-> Note that the latest version can be found [https://github.com/synapticloop/c3p0-multitenant/releases](https://github.com/synapticloop/c3p0-multitenant/releases)
+> Note that the latest version can be found [https://github.com/synapticloopltd/c3p0-multitenant/releases](https://github.com/synapticloopltd/c3p0-multitenant/releases)
 
 As such, this is not a repository, but a location to download files from.
 
@@ -602,7 +631,7 @@ As such, this is not a repository, but a location to download files from.
 
 This project publishes artefacts to [bintray](https://bintray.com/)
 
-> Note that the latest version can be found [https://bintray.com/synapticloop/maven/c3p0-multitenant/view](https://bintray.com/synapticloop/maven/c3p0-multitenant/view)
+> Note that the latest version can be found [https://bintray.com/synapticloopltd/maven/c3p0-multitenant/view](https://bintray.com/synapticloopltd/maven/c3p0-multitenant/view)
 
 ## maven setup
 
@@ -666,9 +695,9 @@ repositories {
 
 ```
 dependencies {
-	runtime(group: 'synapticloop', name: 'c3p0-multitenant', version: '1.0.0', ext: 'jar')
+	runtime(group: 'synapticloopltd', name: 'c3p0-multitenant', version: '1.0.0', ext: 'jar')
 
-	compile(group: 'synapticloop', name: 'c3p0-multitenant', version: '1.0.0', ext: 'jar')
+	compile(group: 'synapticloopltd', name: 'c3p0-multitenant', version: '1.0.0', ext: 'jar')
 }
 ```
 
@@ -676,9 +705,9 @@ or, more simply for versions of gradle greater than 2.1
 
 ```
 dependencies {
-	runtime 'synapticloop:c3p0-multitenant:1.0.0'
+	runtime 'synapticloopltd:c3p0-multitenant:1.0.0'
 
-	compile 'synapticloop:c3p0-multitenant:1.0.0'
+	compile 'synapticloopltd:c3p0-multitenant:1.0.0'
 }
 ```
 
@@ -686,7 +715,7 @@ dependencies {
 
 ```
 <dependency>
-	<groupId>synapticloop</groupId>
+	<groupId>synapticloopltd</groupId>
 	<artifactId>c3p0-multitenant</artifactId>
 	<version>1.0.0</version>
 	<type>jar</type>
@@ -734,7 +763,7 @@ You will also need to download the following dependencies:
 ```
 The MIT License (MIT)
 
-Copyright (c) 2016 synapticloop
+Copyright (c) 2016 synapticloopltd
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

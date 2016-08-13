@@ -26,4 +26,16 @@ MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTen
 Connection connection = multiTenantComboPooledDataSource.getConnection();
 ```
 
+### Property file usage
+
+Should you wish to use property files, the pool of connection pools can be instantiated thusly:
+
+```
+MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource("/c3p0.multitenant.serial.properties");
+```
+
+__Note that the property file is loaded from the classpath and can be named anything__
+
+The property file required for this strategy is listed below:
+
 

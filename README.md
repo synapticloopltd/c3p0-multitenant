@@ -12,7 +12,151 @@
 > Multi tenanted c3p0 pool
 
 
+# Multi-Tenanted c3p0 connection pools
 
+This was originally designed to connect to cockroachdb see [https://www.cockroachlabs.com/](https://www.cockroachlabs.com/) to allow multiple connections to multiple data sources.  However this can be used for any database connection pooling to multiple database.
+
+This extends c3p0 through named connections to allow multiple pools to themselves be pooled.
+
+An example `c3p0.properties` file is listed below:
+
+
+
+
+```
+
+#
+# These are default properties which all of the named configurations inherit
+#
+c3p0.user=multitenant
+c3p0.password=
+
+c3p0.maxPoolSize=2
+c3p0.maxStatements=0
+c3p0.maxStatementsPerConnection=0
+c3p0.minPoolSize=2
+c3p0.acquireIncrement=1
+c3p0.initialPoolSize=2
+c3p0.acquireRetryAttempts=1
+c3p0.idleConnectionTestPeriod=1
+c3p0.debugUnreturnedConnectionStackTraces=true
+c3p0.testConnectionOnCheckout=true
+c3p0.preferredTestQuery=select 1
+
+#
+# Here we list the named configurations for all of the connections pools that we 
+# want to set up, these will all inherit the above configuration items, although
+# they can be over-ridden if required: e.g.:
+#
+#    c3p0.named-configs.one.user=another_user
+#
+c3p0.named-configs.one.jdbcUrl=jdbc:postgresql://localhost:26257/multitenant
+c3p0.named-configs.two.jdbcUrl=jdbc:postgresql://localhost:26257/multitenant
+c3p0.named-configs.three.jdbcUrl=jdbc:postgresql://localhost:26257/multitenant
+c3p0.named-configs.four.jdbcUrl=jdbc:postgresql://localhost:26257/multitenant
+
+# Logging properties
+com.mchange.v2.log.MLog=fallback
+com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL=FINE
+
+```
+
+__NOTE__ the above lines with the `named-configs`:
+
+```
+c3p0.named-configs.one.jdbcUrl=jdbc:postgresql://localhost:26257/multitenant
+c3p0.named-configs.two.jdbcUrl=jdbc:postgresql://localhost:26257/multitenant
+c3p0.named-configs.three.jdbcUrl=jdbc:postgresql://localhost:26257/multitenant
+c3p0.named-configs.four.jdbcUrl=jdbc:postgresql://localhost:26257/multitenant
+```
+
+The named configs are
+
+ - `one`
+ - `two`
+ - `three`
+ - `four`
+
+Once the named configurations are set up, you will then need a `c3p0.multitenant.properties` 
+file to determine the strategy that will be used.  A complete example is listed 
+below, with all of the options that are available.
+
+
+```
+
+# strategy can be one of
+#
+#  ROUND_ROBIN
+#  LOAD_BALANCED
+#  SERIAL
+#  WEIGHTED
+#  NAMED
+#
+# by default, if nothing is set, the strategy will be ROUND_ROBIN
+# strategy=NAMED
+
+#
+# This is a list of tenants -i.e. named configurations for the c3p0 configuration
+#
+tenants=one,two,three,four
+
+#
+# NOTE: This property is only used if the strategy listed above is WEIGHTED
+#
+# The weightings that will be applied to the tenants, doesn't need to add up to
+# 100, can add up to anything, they are relative to the total.  These must be in
+# the same order as the tenants listed above, i.e.:
+#
+#   one   => 60 / 100 weighting
+#   two   => 25 / 100 weighting
+#   three => 10 / 100 weighting
+#   four  =>  5 / 100 weighting
+# 
+# If there are too few weightings, the missing weights will be set to 1, if 
+# there are too many weightings, the extra weightings will be ignored.
+#
+
+weightings=60,25,10,5
+
+#
+# NOTE: This property is only used if the strategy listed above is NAMED
+#
+# The names that will be applied to the tenants.  Each of the names allow the 
+# tenants to be grouped into a sub-pool, to utilise the pool, a call to 
+# getConnection(String poolName), NOT just getConnection().  If a call to 
+# getConnection() is used, then it will return a random connection.  Within each
+# sub-pool, the connection that is retrieved is randonmly assigned.
+#
+# These __MUST__ be in the same order as the tenants listed above, i.e.:
+#
+#   one   => read
+#   two   => read
+#   three => read
+#   four  => write
+# 
+# If there are too few names, the missing names will not be added to any pool 
+# and will not be accessible.  If there are too many names, the extra names will
+# be ignored.
+#
+names=read,read,read,write
+
+
+
+```
+
+
+# Strategies
+
+Built in to the multi tenant connection pools are various strategies for how connections 
+are provided.
+
+ - `ROUND_ROBIN` - choose a connection from the next pool
+ - `LOAD_BALANCED` - choose a connection from the least busy pool
+ - `SERIAL` - choose a connection 
+ - `WEIGHTED` - randomly choose a connection from a weighted selection
+ - `NAMED` - randomly choose a connection from a pool of pools
+
+The strategies are detailed below in more detail:
 ## LOAD_BALANCED
 
 This load balances the connections between all of the pools of connection pools.  This strategy looks at the busy connections on all of the pools and chooses the one based on the minimum number of busy connections.
@@ -262,6 +406,18 @@ TENANTS.add("four");
 MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.LOAD_BALANCED);
 Connection connection = multiTenantComboPooledDataSource.getConnection();
 ```
+
+### Property file usage
+
+Should you wish to use property files, the pool of connection pools can be instantiated thusly:
+
+```
+MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource("/c3p0.multitenant.serial.properties");
+```
+
+__Note that the property file is loaded from the classpath and can be named anything__
+
+The property file required for this strategy is listed below:
 
 
 

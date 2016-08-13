@@ -11,33 +11,44 @@
 		{ "type":"inbuilt", "value":"project-name" },
 		{ "type":"inbuilt", "value":"project-description" },
 
-		{ "type":"file", "value":"src/docs/load-balanced-strategy.md" },
+		{ "type":"file", "value":"src/docs/introduction.md" },
+
 		{ "type": "markup", "value": "\n\n```\n\n" },
-		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.load_balanced.properties" },
+		{ "type": "file", "value": "src/test/resources/c3p0.properties" },
 		{ "type": "markup", "value": "\n\n```\n\n" },
 
-		{ "type":"file", "value":"src/docs/named-strategy.md" },
+		{ "type":"file", "value":"src/docs/introduction-multitenant.md" },
+
 		{ "type": "markup", "value": "\n\n```\n\n" },
-		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.named.properties" },
+		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.properties" },
 		{ "type": "markup", "value": "\n\n```\n\n" },
 
-		{ "type":"file", "value":"src/docs/round-robin-strategy.md" },
+		{ "type":"file", "value":"src/docs/strategies.md" },
+
+		{ "type":"file", "value":"src/docs/strategy-round-robin.md" },
 		{ "type": "markup", "value": "\n\n```\n\n" },
 		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.round_robin.properties" },
 		{ "type": "markup", "value": "\n\n```\n\n" },
 
-		{ "type":"file", "value":"src/docs/serial-strategy.md" },
+		{ "type":"file", "value":"src/docs/strategy-load-balanced.md" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
+		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.load_balanced.properties" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
+
+		{ "type":"file", "value":"src/docs/strategy-serial.md" },
 		{ "type": "markup", "value": "\n\n```\n\n" },
 		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.serial.properties" },
 		{ "type": "markup", "value": "\n\n```\n\n" },
 
-		{ "type":"file", "value":"src/docs/weighted-strategy.md" },
+		{ "type":"file", "value":"src/docs/strategy-weighted.md" },
 		{ "type": "markup", "value": "\n\n```\n\n" },
 		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.weighted.properties" },
 		{ "type": "markup", "value": "\n\n```\n\n" },
 
-
-
+		{ "type":"file", "value":"src/docs/strategy-named.md" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
+		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.named.properties" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
 
 		{ "type":"inbuilt", "value":"gradle-build" },
 		{ "type":"inbuilt", "value":"gradle-test" },

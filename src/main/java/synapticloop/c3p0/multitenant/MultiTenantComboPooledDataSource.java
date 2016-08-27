@@ -22,10 +22,14 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.naming.NamingException;
 import javax.naming.Reference;
@@ -54,6 +58,8 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		LOGGER = MLog.getLogger(MultiTenantComboPooledDataSource.class);
 	}
 
+	private static final int NUM_TRIES_LATENCY_DEFAULT = 50;
+	private static final Strategy DEFAULT_STRATEGY = Strategy.ROUND_ROBIN;
 	private static final JavaBeanReferenceMaker REFERENCE_MAKER = new com.mchange.v2.naming.JavaBeanReferenceMaker();
 
 	private static final String C3P0_MULTITENANT_PROPERTIES = "/c3p0.multitenant.properties";
@@ -62,6 +68,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	private static final String PROPERTY_TENANTS = "tenants";
 	private static final String PROPERTY_WEIGHTINGS = "weightings";
 	private static final String PROPERTY_NAMES = "names";
+	private static final String PROPERTY_NUM_TRIES_LATENCY= "num_tries_latency";
 
 	public static final String KEY_DEFAULT_WEIGHTED_NAME_MAP = "";
 
@@ -69,14 +76,16 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		ROUND_ROBIN, // just go through the connection pools, disregarding load
 		LOAD_BALANCED, // get the lowest number of connections and use this pool
 		SERIAL, // use up all of the first connections, going to the next one when full
+		LEAST_LATENCY_SERIAL, // get the least latency connection in a serial fashion
 		WEIGHTED, // weight the connections, from the passed in values
-		NAMED // get a connection from one of the named pools, there may be more than one pool per name, they will be weighted between them
+		NAMED, // get a connection from one of the named pools, there may be more than one pool per name, they will be weighted between them
 	}
 
-	private Strategy strategy = Strategy.ROUND_ROBIN;
+	private Strategy strategy = DEFAULT_STRATEGY;
 	private List<String> tenants;
 	private List<Integer> weightings = new ArrayList<Integer>();
 	private String[] names;
+	private int numTriesLatency = NUM_TRIES_LATENCY_DEFAULT;
 
 	private List<ComboPooledDataSource> comboPooledDataSources = new ArrayList<ComboPooledDataSource>();
 	private Map<String, ComboPooledDataSource> comboPooledDataSourceMap = new HashMap<String, ComboPooledDataSource>();
@@ -97,7 +106,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	 * @author synapticloop
 	 *
 	 */
-	class MutableInt {
+	private class MutableInt {
 		private int value = 0;
 
 		public void increment() { ++value; }
@@ -105,13 +114,37 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		public int getValue() { return value; }
 	}
 
+	/**
+	 * A simple class to hold the name and the latency for a connection pool
+	 * 
+	 * @author synapticloop
+	 *
+	 */
+	private class NamedLatencyPool {
+		private String name;
+		private Float latency;
+
+		public NamedLatencyPool(String name, Float latency) {
+			this.name = name;
+			this.latency = latency;
+		}
+
+		public String getName() { return(this.name); }
+		public Float getLatency() {return(this.latency); }
+	}
+	/**
+	 * Create a multi-tenant combo pooled data source, reading the strategy and
+	 * the tenants from the passed in property file location.
+	 * 
+	 * @param propertyFileLocation The property file location to load
+	 */
 	public MultiTenantComboPooledDataSource(String propertyFileLocation) {
 		// try and load the c3p0.multitenant.properties
 		Properties properties = new Properties();
 		try {
 			properties.load(MultiTenantComboPooledDataSource.class.getResourceAsStream(propertyFileLocation));
 			// at this point we are looking for tenants and the strategy
-			this.strategy = Strategy.valueOf(properties.getProperty(PROPERTY_STRATEGY, Strategy.ROUND_ROBIN.toString()));
+			this.strategy = Strategy.valueOf(properties.getProperty(PROPERTY_STRATEGY, DEFAULT_STRATEGY.toString()));
 
 			String propertyTenant = properties.getProperty(PROPERTY_TENANTS, null);
 			if(null == propertyTenant) {
@@ -165,6 +198,23 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 				}
 				this.names = propertyNames.split(",");
 				break;
+			case LEAST_LATENCY_SERIAL:
+				// fall-through ignore
+				String propertyNumTriesLatency = properties.getProperty(PROPERTY_NUM_TRIES_LATENCY, "50");
+				try {
+					this.numTriesLatency = Integer.parseInt(propertyNumTriesLatency);
+					if(numTriesLatency <= 0) {
+						if(LOGGER.isLoggable(MLevel.WARNING)) {
+							LOGGER.log(MLevel.WARNING, String.format("A strategy of '%s' was requested, yet parse the property '%s', was set <= 0, using the default value of: %d", Strategy.LEAST_LATENCY_SERIAL.toString(), PROPERTY_NUM_TRIES_LATENCY, this.numTriesLatency, NUM_TRIES_LATENCY_DEFAULT));
+						}
+						this.numTriesLatency = NUM_TRIES_LATENCY_DEFAULT;
+					}
+				} catch(NumberFormatException ex) {
+					if(LOGGER.isLoggable(MLevel.WARNING)) {
+						LOGGER.log(MLevel.WARNING, String.format("A strategy of '%s' was requested, yet I could not parse the property '%s', using the default value of: %d", Strategy.LEAST_LATENCY_SERIAL.toString(), PROPERTY_NUM_TRIES_LATENCY, this.numTriesLatency));
+					}
+				}
+				break;
 			case SERIAL:
 				// fall-through ignore
 			case LOAD_BALANCED:
@@ -177,7 +227,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 
 		} catch (IOException ex) {
 			if(LOGGER.isLoggable(MLevel.SEVERE)) {
-				LOGGER.log(MLevel.SEVERE, String.format("Could not find the '%s' file", propertyFileLocation), ex);
+				LOGGER.log(MLevel.SEVERE, String.format("Could not find the '%s' property file", propertyFileLocation), ex);
 			}
 		}
 
@@ -231,6 +281,13 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		initialiseMultiTenantPools();
 	}
 
+	/**
+	 * Create a multi tenant combo pooled data source with a 'named' strategy.  
+	 * The list size of the names should be the same as the number of tenants
+	 * 
+	 * @param tenants The list of tenant names 
+	 * @param names the names of the tenants
+	 */
 	public MultiTenantComboPooledDataSource(List<String> tenants, String[] names) {
 		this.tenants = tenants;
 		this.names = names;
@@ -241,24 +298,47 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		initialiseMultiTenantPools();
 	}
 
+	/**
+	 * Initialise the multi-tenant pools, depending on what the strategy and the 
+	 * tenants are and any other remaining properties.
+	 */
 	private void initialiseMultiTenantPools() {
 		boolean isDebugEnabled = LOGGER.isLoggable(MLevel.DEBUG);
 
+		if(isDebugEnabled) {
+			LOGGER.log(MLevel.DEBUG, String.format("Attempting multi-tenant connection pool with strategy '%s'", this.strategy.toString()));
+		}
+
+		Set<String> removableTenants = new HashSet<String>();
 		for (String tenant : tenants) {
 			if(isDebugEnabled) {
 				LOGGER.log(MLevel.DEBUG, String.format("Creating multi-tenant connection pool for tenant '%s'", tenant));
 			}
 
 			ComboPooledDataSource comboPooledDataSource = new ComboPooledDataSource(tenant);
-			comboPooledDataSourceMap.put(tenant, comboPooledDataSource);
-
-			if(isDebugEnabled) {
-				LOGGER.log(MLevel.DEBUG, String.format("Created multi-tenant connection pool for tenant '%s'", tenant));
+			if(null == comboPooledDataSource.getJdbcUrl()) {
+				// this means that we cannot find the named tenant
+				removableTenants.add(tenant);
+				LOGGER.log(MLevel.SEVERE, String.format("Could not find named configuration for '%s', this will __NOT__ be added to the pools.", tenant));
+			} else {
+				comboPooledDataSourceMap.put(tenant, comboPooledDataSource);
+	
+				if(isDebugEnabled) {
+					LOGGER.log(MLevel.DEBUG, String.format("Created multi-tenant connection pool for tenant '%s'", tenant));
+				}
 			}
+		}
 
-			// now set up all of the data structures
-			comboPooledDataSources.add(comboPooledDataSource);
-			connectionRequestHitCountMap.put(tenant, new MutableInt());
+		if(removableTenants.size() != 0) {
+			List<String> newTenants = new ArrayList<String>();
+			for (String tenant : tenants) {
+				if(!removableTenants.contains(tenant)) {
+					newTenants.add(tenant);
+				} else {
+					LOGGER.log(MLevel.SEVERE, String.format("Removed tenant '%s' from list of tenants", tenant));
+				}
+			}
+			tenants = newTenants;
 		}
 
 		switch (this.strategy) {
@@ -321,12 +401,21 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 				}
 			}
 			break;
+		case LEAST_LATENCY_SERIAL:
+			// re-order the connection pools by the latency
+			reorderConnectionPoolsByLatency();
+			break;
 		case SERIAL:
+			// do nothing - fall through
 		case LOAD_BALANCED:
+			// do nothing - fall through
 		case ROUND_ROBIN:
+			break;
 		default:
 			// no extra processing for other strategies
-			// TODO - want a catch clause here for any strategies that we don't pick up
+			if(LOGGER.isLoggable(MLevel.WARNING)) {
+				LOGGER.log(MLevel.WARNING, String.format("Could not find the strategy '%s', defaulting to '%s',", this.strategy.toString(), DEFAULT_STRATEGY.toString()));
+			}
 			break;
 		}
 
@@ -337,8 +426,72 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	}
 
 	/**
+	 * Go through each of the connection pools and determine their latency, then
+	 * order the connection pool by latency
+	 */
+	private void reorderConnectionPoolsByLatency() {
+		List<NamedLatencyPool> namedLatencyPools = new ArrayList<NamedLatencyPool>();
+
+		for (ComboPooledDataSource comboPooledDataSource : comboPooledDataSources) {
+			String dataSourceName = comboPooledDataSource.getDataSourceName();
+
+			long startTime = System.currentTimeMillis();
+			boolean isInError = false;
+
+			for(int i = 0; i < numTriesLatency; i++) {
+				// try and get some connections and determine the latency
+				try {
+					comboPooledDataSource.getConnection().close();
+				} catch (SQLException ex) {
+					if(LOGGER.isLoggable(MLevel.SEVERE)) {
+						LOGGER.log(MLevel.SEVERE, String.format("Using strategy of '%s', could not get a connection to data source '%s', setting latency to: %d", this.strategy.toString(), dataSourceName, Float.MAX_VALUE));
+					}
+
+					isInError = true;
+					break;
+				}
+			}
+
+			if(isInError) {
+				namedLatencyPools.add(new NamedLatencyPool(dataSourceName, Float.MAX_VALUE));
+			} else {
+				float averageLatency = (System.currentTimeMillis() - startTime)/numTriesLatency;
+				namedLatencyPools.add(new NamedLatencyPool(dataSourceName, averageLatency));
+				if(LOGGER.isLoggable(MLevel.INFO)) {
+					LOGGER.log(MLevel.INFO, String.format("Data source '%s' has an average latency of: %.12f from %d tries", dataSourceName, averageLatency, numTriesLatency));
+				}
+			}
+		}
+
+		// now we can go through and order them
+		Collections.sort(namedLatencyPools, new Comparator<NamedLatencyPool>() {
+
+			@Override
+			public int compare(NamedLatencyPool o1, NamedLatencyPool o2) {
+				return(o1.getLatency().compareTo(o2.getLatency()));
+			}
+		});
+
+		// now that it is sorted, go through and create a new comboPoolList for 
+		// SERIAL strategy usage
+		List<ComboPooledDataSource> orderedComboPooledDataSources = new ArrayList<ComboPooledDataSource>();
+
+		for (NamedLatencyPool namedLatencyPool : namedLatencyPools) {
+			ComboPooledDataSource comboPooledDataSource = comboPooledDataSourceMap.get(namedLatencyPool.getName());
+			orderedComboPooledDataSources.add(comboPooledDataSource);
+			if(LOGGER.isLoggable(MLevel.INFO)) {
+				LOGGER.log(MLevel.INFO, String.format("Adding data source '%s'.", comboPooledDataSource.getDataSourceName()));
+			}
+		}
+
+		comboPooledDataSources = orderedComboPooledDataSources;
+	}
+
+	/**
 	 * Get a connection from one of the pools this will depend on the pool that 
-	 * was chosen when instantiation occurred
+	 * was chosen when instantiation occurred.  If this was instantiation was a 
+	 * 'NAMED' strategy, then this will log a SEVERE error and return a round 
+	 * robin connection.
 	 * 
 	 * @return the connection to one of the tenants
 	 * 
@@ -355,21 +508,29 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		case LOAD_BALANCED:
 			return(getLoadBalancedConnection());
 		case SERIAL:
+		case LEAST_LATENCY_SERIAL:
 			return(getSerialConnection());
 		case WEIGHTED:
 			return(getWeightedConnection());
 		case NAMED:
-			return(getNamedConnection());
+			if(LOGGER.isLoggable(MLevel.SEVERE)) {
+				LOGGER.log(MLevel.SEVERE, String.format("Called getConnection() where the strategy is '%s', reverting to strategy '%s'", Strategy.NAMED, DEFAULT_STRATEGY));
+			}
+
+			return(getRoundRobinConnection());
 		default:
 			throw new SQLException(String.format("Could not determine the strategy for connections, was looking for '%s'", strategy.toString()));
 		}
 	}
 
 	/**
+	 * Get a connection from a named pool, this method is only valid where the
+	 * strategy is NAMED.  All other strategies will return null
 	 * 
 	 * @param poolName the name of the pool to get a connection from
 	 * 
-	 * @return the connection form the pool
+	 * @return the connection form the pool, or null if the strategy is not NAMED
+	 * 
 	 * @throws SQLException if there was an error getting a connection
 	 */
 	public Connection getConnection(String poolName) throws SQLException {
@@ -381,6 +542,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		case ROUND_ROBIN:
 		case LOAD_BALANCED:
 		case SERIAL:
+		case LEAST_LATENCY_SERIAL:
 		case WEIGHTED:
 			if(LOGGER.isLoggable(MLevel.SEVERE)) {
 				LOGGER.log(MLevel.SEVERE, String.format("Cannot get a named connection of '%s' as the '%s' strategy does not support it.", this.strategy.toString(), Strategy.NAMED.toString()));
@@ -449,6 +611,13 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		return(comboPooledDataSource.getConnection());
 	}
 
+	/**
+	 * Get a load balanced connection 
+	 * 
+	 * @return the connection from the load balancer
+	 * 
+	 * @throws SQLException If there was an error getting the connection
+	 */
 	private synchronized Connection getLoadBalancedConnection() throws SQLException {
 		int maxBusyConnections = 0;
 		int poolIndex = 0;
@@ -459,7 +628,6 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 			for (ComboPooledDataSource comboPooledDataSource : comboPooledDataSources) {
 				// TODO - do we really want to fail on this one... - may need to split out try/catch
 				int numBusyConnections = comboPooledDataSource.getNumBusyConnections();
-				System.out.print(numBusyConnections + ":");
 				if(numBusyConnections == 0) {
 					readyPoolIndex = poolIndex;
 					break;
@@ -502,14 +670,6 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		} else {
 			return(null);
 		}
-	}
-
-	private Connection getNamedConnection() throws SQLException {
-		if(LOGGER.isLoggable(MLevel.SEVERE)) {
-			LOGGER.log(MLevel.SEVERE, String.format("Called getConnection() where the strategy is '%s', reverting to strategy '%s'", Strategy.NAMED, Strategy.ROUND_ROBIN));
-		}
-
-		return(getRoundRobinConnection());
 	}
 
 	/**

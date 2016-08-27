@@ -18,6 +18,7 @@ package synapticloop.c3p0.multitenant;
 
 public class ConnectionStatistics {
 	private static final int numConnections = 0;
+
 	public ConnectionStatistics() {
 		
 	}

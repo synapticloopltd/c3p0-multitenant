@@ -1,9 +1,9 @@
 
-## SERIAL
+## `SERIAL`
 
-This strategy chooses connections based on the number of busy connections, it will try and fill up all of the connection pool for the first available pool of conneciton pools.  Once this pool has been exhausted, it will move on to the next one (and so on for all of the available pools of connection pools).  Once the connections are freed from the earlier pools, it will re-use them.
+This strategy chooses connections based on the number of busy connections, it will try and fill up all of the connection pool for the first available pool of connection pools.  Once this pool has been exhausted, it will move on to the next one (and so on for all of the available pools of connection pools).  Once the connections are freed from the earlier pools, it will re-use them.
 
-> In effect this will use up as many connections from the first available pool of conneciton pools
+> In effect this will use up as many connections from the first available pool of connection pools
 
 To instantiate a `SERIAL` strategy pool and get a connection:
 
@@ -22,7 +22,7 @@ TENANTS.add("two");
 TENANTS.add("three");
 TENANTS.add("four");
 
-MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.LOAD_BALANCED);
+MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.SERIAL);
 Connection connection = multiTenantComboPooledDataSource.getConnection();
 ```
 

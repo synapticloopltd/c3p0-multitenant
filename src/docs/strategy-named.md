@@ -1,5 +1,5 @@
 
-## NAMED
+## `NAMED`
 
 This strategy allows you to pool the pool of connection pools by name.  As an example, you may have `read` only databases that your web application mainly uses, whilst you may have `write` databases that is used by the back end system.
 

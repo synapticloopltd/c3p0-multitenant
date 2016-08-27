@@ -137,4 +137,9 @@ public class MultiTenantComboPooledDataSourceTest extends BaseTest {
 		assertTrue(four > 0);
 	}
 
+	@Test
+	public void testMissingTenant() throws SQLException {
+		multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource("/c3p0.multitenant.round_robin-bad-tenants.properties");
+
+	}
 }

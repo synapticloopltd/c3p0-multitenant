@@ -12,11 +12,17 @@
 		{ "type":"inbuilt", "value":"project-name" },
 		{ "type":"inbuilt", "value":"project-description" },
 
+		{ "type": "markup", "value": "\n\n# Table of Contents\n\n" },
+
+		{ "type": "toc", "value": "2" },
+		{ "type": "toclinks", "value": "true" },
+		{ "type": "tocbacktotop", "value": " <sup><sup>[top](#)</sup></sup>"},
+
 		{ "type":"file", "value":"src/docs/introduction.md" },
 
-		{ "type": "markup", "value": "\n\n```\n\n" },
+		{ "type": "markup", "value": "\n\n```\n" },
 		{ "type": "file", "value": "src/test/resources/c3p0.properties" },
-		{ "type": "markup", "value": "\n\n```\n\n" },
+		{ "type": "markup", "value": "\n```\n\n" },
 
 		{ "type":"file", "value":"src/docs/introduction-multitenant.md" },
 
@@ -41,12 +47,18 @@
 		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.serial.properties" },
 		{ "type": "markup", "value": "\n\n```\n\n" },
 
+		{ "type":"file", "value":"src/docs/strategy-least-latency-serial.md" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
+		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.least-latency-serial.properties" },
+		{ "type": "markup", "value": "\n\n```\n\n" },
+
 		{ "type":"file", "value":"src/docs/strategy-weighted.md" },
 		{ "type": "markup", "value": "\n\n```\n\n" },
 		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.weighted.properties" },
 		{ "type": "markup", "value": "\n\n```\n\n" },
 
 		{ "type":"file", "value":"src/docs/strategy-named.md" },
+
 		{ "type": "markup", "value": "\n\n```\n\n" },
 		{ "type": "file", "value": "src/test/resources/c3p0.multitenant.named.properties" },
 		{ "type": "markup", "value": "\n\n```\n\n" },

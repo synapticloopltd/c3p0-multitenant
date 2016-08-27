@@ -1,5 +1,5 @@
 
-## LOAD_BALANCED
+## `LOAD_BALANCED`
 
 This load balances the connections between all of the pools of connection pools.  This strategy looks at the busy connections on all of the pools and chooses the one based on the minimum number of busy connections.
 

@@ -1,5 +1,5 @@
 
-## ROUND_ROBIN
+## `ROUND_ROBIN`
 
 This is the default strategy for the multi tenanted pool and simply round robins the connection requests through all of the pools of connection pools
 

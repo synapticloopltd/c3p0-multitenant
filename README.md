@@ -5,11 +5,51 @@
 
 [![Download](https://api.bintray.com/packages/synapticloopltd/maven/c3p0-multitenant/images/download.svg)](https://bintray.com/synapticloopltd/maven/c3p0-multitenant/_latestVersion) [![GitHub Release](https://img.shields.io/github/release/synapticloopltd/c3p0-multitenant.svg)](https://github.com/synapticloopltd/c3p0-multitenant/releases) 
 
-# c3p0-multitenant
+
+
+<a name="heading_0"></a>
+
+# c3p0-multitenant <sup><sup>[top](#)</sup></sup>
 
 
 
 > Multi tenanted c3p0 pool
+
+
+
+
+
+
+<a name="heading_1"></a>
+
+# Table of Contents <sup><sup>[top](#)</sup></sup>
+
+
+
+ - [c3p0-multitenant](#heading_0)
+ - [Table of Contents](#heading_1)
+ - [Strategies](#heading_2)
+   - [ROUND_ROBIN](#heading_3)
+   - [LOAD_BALANCED](#heading_5)
+   - [SERIAL](#heading_7)
+   - [LEAST_LATENCY_SERIAL](#heading_9)
+   - [WEIGHTED](#heading_11)
+   - [NAMED](#heading_13)
+ - [Building the Package](#heading_15)
+   - [*NIX/Mac OS X](#heading_16)
+   - [Windows](#heading_17)
+ - [Running the Tests](#heading_18)
+   - [*NIX/Mac OS X](#heading_19)
+   - [Windows](#heading_20)
+ - [Additional Testing Notes](#heading_21)
+ - [Artefact Publishing - Github](#heading_22)
+ - [Artefact Publishing - Bintray](#heading_23)
+   - [maven setup](#heading_24)
+   - [gradle setup](#heading_25)
+   - [Dependencies - Gradle](#heading_26)
+   - [Dependencies - Maven](#heading_27)
+   - [Dependencies - Downloads](#heading_28)
+ - [License](#heading_34)
 
 
 # Multi-Tenanted c3p0 connection pools
@@ -23,8 +63,9 @@ An example `c3p0.properties` file is listed below:
 
 
 
-```
 
+
+```
 #
 # These are default properties which all of the named configurations inherit
 #
@@ -58,10 +99,13 @@ c3p0.named-configs.four.jdbcUrl=jdbc:postgresql://localhost:26257/multitenant
 # Logging properties
 com.mchange.v2.log.MLog=fallback
 com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL=FINE
-
 ```
 
+
+
 __NOTE__ the above lines with the `named-configs`:
+
+
 
 ```
 c3p0.named-configs.one.jdbcUrl=jdbc:postgresql://localhost:26257/multitenant
@@ -69,6 +113,8 @@ c3p0.named-configs.two.jdbcUrl=jdbc:postgresql://localhost:26257/multitenant
 c3p0.named-configs.three.jdbcUrl=jdbc:postgresql://localhost:26257/multitenant
 c3p0.named-configs.four.jdbcUrl=jdbc:postgresql://localhost:26257/multitenant
 ```
+
+
 
 The named configs are
 
@@ -82,6 +128,8 @@ file to determine the strategy that will be used.  A complete example is listed
 below, with all of the options that are available.
 
 
+
+
 ```
 
 # strategy can be one of
@@ -89,6 +137,7 @@ below, with all of the options that are available.
 #  ROUND_ROBIN
 #  LOAD_BALANCED
 #  SERIAL
+#  LEAST_LATENCY_SERIAL
 #  WEIGHTED
 #  NAMED
 #
@@ -140,28 +189,49 @@ weightings=60,25,10,5
 #
 names=read,read,read,write
 
+#
+# NOTE: This property is only used if the strategy listed above is LEAST_LATENCY_SERIAL
+#
+# This is the number of tries for each connection to determine the latency, if
+# not set, then it will default to 50
+#
+num_tries_latency=50
+
 
 
 ```
 
 
-# Strategies
+
+
+
+
+<a name="heading_2"></a>
+
+# Strategies <sup><sup>[top](#)</sup></sup>
 
 Built in to the multi tenant connection pools are various strategies for how connections 
 are provided.
 
  - `ROUND_ROBIN` - choose a connection from the next pool
  - `LOAD_BALANCED` - choose a connection from the least busy pool
- - `SERIAL` - choose a connection 
+ - `SERIAL` - exhaust connections from the first available pool
+ - `LEAST_LATENCY_SERIAL` - exhaust connections from the least latency pool
  - `WEIGHTED` - randomly choose a connection from a weighted selection
  - `NAMED` - randomly choose a connection from a pool of pools
 
 The strategies are detailed below in more detail:
-## ROUND_ROBIN
+
+
+<a name="heading_3"></a>
+
+## `ROUND_ROBIN` <sup><sup>[top](#)</sup></sup>
 
 This is the default strategy for the multi tenanted pool and simply round robins the connection requests through all of the pools of connection pools
 
 To instantiate a `ROUND_ROBIN` strategy pool and get a connection:
+
+
 
 ```
 import java.sql.Connection;
@@ -182,17 +252,25 @@ MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTen
 Connection connection = multiTenantComboPooledDataSource.getConnection();
 ```
 
+
+
 ### Property file usage
 
 Should you wish to use property files, the pool of connection pools can be instantiated thusly:
+
+
 
 ```
 MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource("/c3p0.multitenant.round_robin.properties");
 ```
 
+
+
 __Note that the property file is loaded from the classpath and can be named anything__
 
 The property file required for this strategy is listed below:
+
+
 
 
 
@@ -204,6 +282,7 @@ The property file required for this strategy is listed below:
 #  ROUND_ROBIN
 #  LOAD_BALANCED
 #  SERIAL
+#  LEAST_LATENCY_SERIAL
 #  WEIGHTED
 #  NAMED
 #
@@ -219,13 +298,21 @@ tenants=one,two,three,four
 ```
 
 
-## LOAD_BALANCED
+
+
+
+
+<a name="heading_5"></a>
+
+## `LOAD_BALANCED` <sup><sup>[top](#)</sup></sup>
 
 This load balances the connections between all of the pools of connection pools.  This strategy looks at the busy connections on all of the pools and chooses the one based on the minimum number of busy connections.
 
 > In effect this will use a connection from the least busy pool
 
 To instantiate a `LOAD_BALANCED` strategy pool and get a connection:
+
+
 
 ```
 import java.sql.Connection;
@@ -247,17 +334,25 @@ Connection connection = multiTenantComboPooledDataSource.getConnection();
 ```
 
 
+
+
 ### Property file usage
 
 Should you wish to use property files, the pool of connection pools can be instantiated thusly:
+
+
 
 ```
 MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource("/c3p0.multitenant.load_balanced.properties");
 ```
 
+
+
 __Note that the property file is loaded from the classpath and can be named anything__
 
 The property file required for this strategy is listed below:
+
+
 
 
 
@@ -270,6 +365,7 @@ The property file required for this strategy is listed below:
 #  ROUND_ROBIN
 #  LOAD_BALANCED
 #  SERIAL
+#  LEAST_LATENCY_SERIAL
 #  WEIGHTED
 #  NAMED
 #
@@ -286,13 +382,21 @@ tenants=one,two,three,four
 ```
 
 
-## SERIAL
 
-This strategy chooses connections based on the number of busy connections, it will try and fill up all of the connection pool for the first available pool of conneciton pools.  Once this pool has been exhausted, it will move on to the next one (and so on for all of the available pools of connection pools).  Once the connections are freed from the earlier pools, it will re-use them.
 
-> In effect this will use up as many connections from the first available pool of conneciton pools
+
+
+<a name="heading_7"></a>
+
+## `SERIAL` <sup><sup>[top](#)</sup></sup>
+
+This strategy chooses connections based on the number of busy connections, it will try and fill up all of the connection pool for the first available pool of connection pools.  Once this pool has been exhausted, it will move on to the next one (and so on for all of the available pools of connection pools).  Once the connections are freed from the earlier pools, it will re-use them.
+
+> In effect this will use up as many connections from the first available pool of connection pools
 
 To instantiate a `SERIAL` strategy pool and get a connection:
+
+
 
 ```
 import java.sql.Connection;
@@ -309,21 +413,29 @@ TENANTS.add("two");
 TENANTS.add("three");
 TENANTS.add("four");
 
-MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.LOAD_BALANCED);
+MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.SERIAL);
 Connection connection = multiTenantComboPooledDataSource.getConnection();
 ```
+
+
 
 ### Property file usage
 
 Should you wish to use property files, the pool of connection pools can be instantiated thusly:
 
+
+
 ```
 MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource("/c3p0.multitenant.serial.properties");
 ```
 
+
+
 __Note that the property file is loaded from the classpath and can be named anything__
 
 The property file required for this strategy is listed below:
+
+
 
 
 
@@ -335,6 +447,7 @@ The property file required for this strategy is listed below:
 #  ROUND_ROBIN
 #  LOAD_BALANCED
 #  SERIAL
+#  LEAST_LATENCY_SERIAL
 #  WEIGHTED
 #  NAMED
 #
@@ -351,13 +464,112 @@ tenants=one,two,three,four
 ```
 
 
-## WEIGHTED
+
+
+
+
+<a name="heading_9"></a>
+
+## `LEAST_LATENCY_SERIAL` <sup><sup>[top](#)</sup></sup>
+
+This strategy chooses the connection with the least latency and the number of busy connections  It will try and fill up all of the connection pool for the least latency pool of connection pools.  Once this pool has been exhausted, it will move on to the next one (and so on for all of the available pools of connection pools).  Once the connections are freed from the earlier pools, it will re-use them.
+
+This will allow you to have distributed systems use the closest available connection pool.
+
+In order to do this, 10 connections are serially retrieved from each of the pools on startup, and then the strategy is the same as `SERIAL`
+
+> In effect this will use up as many connections from the least latency pool of connection pools, before consuming connections from the next pool
+
+To instantiate a `LEAST_LATENCY_SERIAL` strategy pool and get a connection:
+
+
+
+```
+import java.sql.Connection;
+import java.util.List;
+
+import synapticloop.c3p0.multitenant.MultiTenantComboPooledDataSource;
+import synapticloop.c3p0.multitenant.MultiTenantComboPooledDataSource.Strategy;
+
+
+List<String> TENANTS = new ArrayList<String>();
+
+TENANTS.add("one");
+TENANTS.add("two");
+TENANTS.add("three");
+TENANTS.add("four");
+
+MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.LEAST_LATENCY_SERIAL);
+Connection connection = multiTenantComboPooledDataSource.getConnection();
+```
+
+
+
+### Property file usage
+
+Should you wish to use property files, the pool of connection pools can be instantiated thusly:
+
+
+
+```
+MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource("/c3p0.multitenant.least-latency-serial.properties");
+```
+
+
+
+__Note that the property file is loaded from the classpath and can be named anything__
+
+The property file required for this strategy is listed below:
+
+
+
+
+
+
+```
+
+# strategy can be one of
+#
+#  ROUND_ROBIN
+#  LOAD_BALANCED
+#  SERIAL
+#  LEAST_LATENCY_SERIAL
+#  WEIGHTED
+#  NAMED
+#
+# by default, if nothing is set, the strategy will be ROUND_ROBIN
+strategy=LEAST_LATENCY_SERIAL
+
+#
+# This is a list of tenants -i.e. named configurations for the c3p0 configuration
+#
+tenants=one,two,three,four
+
+#
+# This is the number of tries for each connection to determine the latency, if
+# not set, then it will default to 50
+#
+num_tries_latency=50
+
+
+```
+
+
+
+
+
+
+<a name="heading_11"></a>
+
+## WEIGHTED <sup><sup>[top](#)</sup></sup>
 
 This strategy allows you to weight certain connections for more use, than others, you are required to add in the weightings, or they will be equally weighted - in effect giving all of the pools of connection pools equal chance to be selected for usage.
 
 > In effect this will randomly choose a connection from the pool weighted with the passed in weightings
 
 To instantiate a `WEIGHTED` strategy pool and get a connection:
+
+
 
 ```
 import java.sql.Connection;
@@ -385,13 +597,19 @@ Connection connection = multiTenantComboPooledDataSource.getConnection();
 
 ```
 
+
+
 In the above example, on average, **65%** will come from the first connection pool, **25%** from the second, **10%** from the third and **5%** from the fourth.  
 
 If you instantiate a `WEIGHTED` strategy thusly:
 
+
+
 ```
 MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource(TENANTS, Strategy.WEIGHTED);
 ```
+
+
 
 Then all of the connection pools will be given a default weighting of 1.
 
@@ -400,13 +618,19 @@ Then all of the connection pools will be given a default weighting of 1.
 
 Should you wish to use property files, the pool of connection pools can be instantiated thusly:
 
+
+
 ```
 MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource("/c3p0.multitenant.weighted.properties");
 ```
 
+
+
 __Note that the property file is loaded from the classpath and can be named anything__
 
 The property file required for this strategy is listed below:
+
+
 
 
 
@@ -418,6 +642,7 @@ The property file required for this strategy is listed below:
 #  ROUND_ROBIN
 #  LOAD_BALANCED
 #  SERIAL
+#  LEAST_LATENCY_SERIAL
 #  WEIGHTED
 #  NAMED
 #
@@ -452,11 +677,19 @@ weightings=60,25,10,5
 ```
 
 
-## NAMED
+
+
+
+
+<a name="heading_13"></a>
+
+## `NAMED` <sup><sup>[top](#)</sup></sup>
 
 This strategy allows you to pool the pool of connection pools by name.  As an example, you may have `read` only databases that your web application mainly uses, whilst you may have `write` databases that is used by the back end system.
 
 To instantiate a `WEIGHTED` strategy pool and get a connection:
+
+
 
 ```
 import java.sql.Connection;
@@ -484,19 +717,27 @@ Connection readConnection = multiTenantComboPooledDataSource.getConnection("read
 Connection writeConnection = multiTenantComboPooledDataSource.getConnection("write");
 ```
 
+
+
 If you mistakenly call `getConnection()` without passing in the named pool, you will get a `ROUND_ROBIN` connection.
 
 ### Property file usage
 
 Should you wish to use property files, the pool of connection pools can be instantiated thusly:
 
+
+
 ```
 MultiTenantComboPooledDataSource multiTenantComboPooledDataSource = new MultiTenantComboPooledDataSource("/c3p0.multitenant.named.properties");
 ```
 
+
+
 __Note that the property file is loaded from the classpath and can be named anything__
 
 The property file required for this strategy is listed below:
+
+
 
 
 
@@ -508,6 +749,7 @@ The property file required for this strategy is listed below:
 #  ROUND_ROBIN
 #  LOAD_BALANCED
 #  SERIAL
+#  LEAST_LATENCY_SERIAL
 #  WEIGHTED
 #  NAMED
 #
@@ -547,16 +789,30 @@ names=read,read,read,write
 
 
 
-# Building the Package
 
-## *NIX/Mac OS X
+
+
+
+<a name="heading_15"></a>
+
+# Building the Package <sup><sup>[top](#)</sup></sup>
+
+
+
+<a name="heading_16"></a>
+
+## *NIX/Mac OS X <sup><sup>[top](#)</sup></sup>
 
 From the root of the project, simply run
 
 `./gradlew build`
 
 
-## Windows
+
+
+<a name="heading_17"></a>
+
+## Windows <sup><sup>[top](#)</sup></sup>
 
 `./gradlew.bat build`
 
@@ -565,9 +821,17 @@ This will compile and assemble the artefacts into the `build/libs/` directory.
 
 Note that this may also run tests (if applicable see the Testing notes)
 
-# Running the Tests
 
-## *NIX/Mac OS X
+
+<a name="heading_18"></a>
+
+# Running the Tests <sup><sup>[top](#)</sup></sup>
+
+
+
+<a name="heading_19"></a>
+
+## *NIX/Mac OS X <sup><sup>[top](#)</sup></sup>
 
 From the root of the project, simply run
 
@@ -577,7 +841,11 @@ if you do not have gradle installed, try:
 
 `gradlew --info test`
 
-## Windows
+
+
+<a name="heading_20"></a>
+
+## Windows <sup><sup>[top](#)</sup></sup>
 
 From the root of the project, simply run
 
@@ -591,51 +859,81 @@ if you do not have gradle installed, try:
 The `--info` switch will also output logging for the tests
 
 
-# Additional Testing Notes
+
+
+<a name="heading_21"></a>
+
+# Additional Testing Notes <sup><sup>[top](#)</sup></sup>
 
 In order for the test to run, you __MUST__ have a cockroach DB setup:
 
+
+
 ```
-cockroach start --store=node1 --port=26257 --http-port=8080 --background
-cockroach start --store=node2 --port=26258 --http-port=8081 --join=localhost:26257 --background
-cockroach start --store=node3 --port=26259 --http-port=8082 --join=localhost:26257 --background
-cockroach start --store=node4 --port=26260 --http-port=8083 --join=localhost:26257 --background
+cockroach start --store=cockroachdb/node1 --port=26257 --http-port=8080 --background
+cockroach start --store=cockroachdb/node2 --port=26258 --http-port=8081 --join=localhost:26257 --background
+cockroach start --store=cockroachdb/node3 --port=26259 --http-port=8082 --join=localhost:26257 --background
+cockroach start --store=cockroachdb/node4 --port=26260 --http-port=8083 --join=localhost:26257 --background
 ```
+
+
 
 This will start 4 nodes all clustered together.
 
 Run:
 
+
+
 ```
 cockroach sql
 ```
 
+
+
 Then run
+
+
 
 ```
 create database multitenant;
 grant all on multitenant.* to multitenant;
 ```
 
+
+
 This will allow the user `multitenant` to connect to the database.
 
-# Artefact Publishing - Github
 
-This project publishes artefacts to [GitHib](https://github.com/)
+
+<a name="heading_22"></a>
+
+# Artefact Publishing - Github <sup><sup>[top](#)</sup></sup>
+
+This project publishes artefacts to [GitHub](https://github.com/)
 
 > Note that the latest version can be found [https://github.com/synapticloopltd/c3p0-multitenant/releases](https://github.com/synapticloopltd/c3p0-multitenant/releases)
 
 As such, this is not a repository, but a location to download files from.
 
-# Artefact Publishing - Bintray
+
+
+<a name="heading_23"></a>
+
+# Artefact Publishing - Bintray <sup><sup>[top](#)</sup></sup>
 
 This project publishes artefacts to [bintray](https://bintray.com/)
 
 > Note that the latest version can be found [https://bintray.com/synapticloopltd/maven/c3p0-multitenant/view](https://bintray.com/synapticloopltd/maven/c3p0-multitenant/view)
 
-## maven setup
+
+
+<a name="heading_24"></a>
+
+## maven setup <sup><sup>[top](#)</sup></sup>
 
 this comes from the jcenter bintray, to set up your repository:
+
+
 
 ```
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -671,9 +969,17 @@ this comes from the jcenter bintray, to set up your repository:
 </settings>
 ```
 
-## gradle setup
+
+
+
+
+<a name="heading_25"></a>
+
+## gradle setup <sup><sup>[top](#)</sup></sup>
 
 Repository
+
+
 
 ```
 repositories {
@@ -683,7 +989,11 @@ repositories {
 }
 ```
 
+
+
 or just
+
+
 
 ```
 repositories {
@@ -691,38 +1001,64 @@ repositories {
 }
 ```
 
-## Dependencies - Gradle
+
+
+
+
+<a name="heading_26"></a>
+
+## Dependencies - Gradle <sup><sup>[top](#)</sup></sup>
+
+
 
 ```
 dependencies {
-	runtime(group: 'synapticloopltd', name: 'c3p0-multitenant', version: '1.0.0', ext: 'jar')
+	runtime(group: 'synapticloopltd', name: 'c3p0-multitenant', version: '1.1.0', ext: 'jar')
 
-	compile(group: 'synapticloopltd', name: 'c3p0-multitenant', version: '1.0.0', ext: 'jar')
+	compile(group: 'synapticloopltd', name: 'c3p0-multitenant', version: '1.1.0', ext: 'jar')
 }
 ```
+
+
 
 or, more simply for versions of gradle greater than 2.1
 
+
+
 ```
 dependencies {
-	runtime 'synapticloopltd:c3p0-multitenant:1.0.0'
+	runtime 'synapticloopltd:c3p0-multitenant:1.1.0'
 
-	compile 'synapticloopltd:c3p0-multitenant:1.0.0'
+	compile 'synapticloopltd:c3p0-multitenant:1.1.0'
 }
 ```
 
-## Dependencies - Maven
+
+
+
+
+<a name="heading_27"></a>
+
+## Dependencies - Maven <sup><sup>[top](#)</sup></sup>
+
+
 
 ```
 <dependency>
 	<groupId>synapticloopltd</groupId>
 	<artifactId>c3p0-multitenant</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0</version>
 	<type>jar</type>
 </dependency>
 ```
 
-## Dependencies - Downloads
+
+
+
+
+<a name="heading_28"></a>
+
+## Dependencies - Downloads <sup><sup>[top](#)</sup></sup>
 
 
 You will also need to download the following dependencies:
@@ -758,7 +1094,13 @@ You will also need to download the following dependencies:
 
 **NOTE:** You may need to download any dependencies of the above dependencies in turn (i.e. the transitive dependencies)
 
-# License
+
+
+<a name="heading_34"></a>
+
+# License <sup><sup>[top](#)</sup></sup>
+
+
 
 ```
 The MIT License (MIT)
@@ -785,9 +1127,10 @@ SOFTWARE.
 ```
 
 
+
+
 --
 
 > `This README.md file was hand-crafted with care utilising synapticloop`[`templar`](https://github.com/synapticloop/templar/)`->`[`documentr`](https://github.com/synapticloop/documentr/)
 
 --
-

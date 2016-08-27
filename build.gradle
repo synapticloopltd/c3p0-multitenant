@@ -6,14 +6,13 @@
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
 // list all of the plugins for this project
 plugins {
 	id 'java'
 	id 'eclipse'
 	id 'net.saliman.cobertura' version '2.3.0'
 	id 'synapticloop.copyrightr' version '1.0.1'
-	id 'synapticloop.documentr' version '2.1.1'
+	id 'synapticloop.documentr' version '2.5.1'
 	id 'maven-publish'
 	id 'co.riiid.gradle' version '0.4.2'
 	id 'com.jfrog.bintray' version '1.6'
@@ -24,7 +23,7 @@ group = 'synapticloop'
 archivesBaseName = 'c3p0-multitenant'
 description = """Multi tenanted c3p0 pool"""
 
-version = '1.0.0'
+version = '1.1.0'
 
 
 sourceCompatibility = 1.7
@@ -110,6 +109,13 @@ copyrightr {
 
 }
 
+
+
+documentr {
+	directory = '.'
+	verbose = 'true'
+	extension = 'md' // this is the default
+}
 
 def javaApiUrl = 'http://docs.oracle.com/javase/7/docs/api/'
 def groovyApiUrl = 'http://groovy.codehaus.org/gapi/'

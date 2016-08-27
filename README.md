@@ -599,7 +599,7 @@ Connection connection = multiTenantComboPooledDataSource.getConnection();
 
 
 
-In the above example, on average, **65%** will come from the first connection pool, **25%** from the second, **10%** from the third and **5%** from the fourth.  
+In the above example, on average, **60%** will come from the first connection pool, **25%** from the second, **10%** from the third and **5%** from the fourth.  
 
 If you instantiate a `WEIGHTED` strategy thusly:
 

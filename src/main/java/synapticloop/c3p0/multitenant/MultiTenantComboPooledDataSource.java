@@ -90,6 +90,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	private List<ComboPooledDataSource> comboPooledDataSources = new ArrayList<ComboPooledDataSource>();
 	private Map<String, ComboPooledDataSource> comboPooledDataSourceMap = new HashMap<String, ComboPooledDataSource>();
 
+	// this is used by the ROUND_ROBIN strategy
 	private int comboPooledDataSourcesSize;
 	private int comboPooledDataSourcesCurrent = 0;
 
@@ -326,7 +327,11 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 				if(isDebugEnabled) {
 					LOGGER.log(MLevel.DEBUG, String.format("Created multi-tenant connection pool for tenant '%s'", tenant));
 				}
-			}
+
+				// now set up all of the data structures
+				comboPooledDataSources.add(comboPooledDataSource);
+				connectionRequestHitCountMap.put(tenant, new MutableInt());
+		}
 		}
 
 		if(removableTenants.size() != 0) {
@@ -734,4 +739,11 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	 * @return the total weightings for the weighted map
 	 */
 	public int getTotalWeightings() { return(weightedMap.getTotalWeightings()); }
+
+	/**
+	 * Get the number of combo pools that have been initialised
+	 * 
+	 * @return the number of combo pools that have been initialised
+	 */
+	public int getComboPooledDataSourcesSize() { return(this.comboPooledDataSourcesSize); }
 }

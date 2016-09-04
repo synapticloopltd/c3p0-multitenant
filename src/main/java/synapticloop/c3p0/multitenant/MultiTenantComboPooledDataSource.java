@@ -133,9 +133,13 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		public String getName() { return(this.name); }
 		public Float getLatency() {return(this.latency); }
 	}
+
 	/**
 	 * Create a multi-tenant combo pooled data source, reading the strategy and
-	 * the tenants from the passed in property file location.
+	 * the tenants from the passed in property file location.  This parses all 
+	 * of the required data from the properties file, builds any required data 
+	 * structures and then finally calls the initialiseMultiTenantPools() method
+	 * which then initialises the pools.
 	 * 
 	 * @param propertyFileLocation The property file location to load
 	 */

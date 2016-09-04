@@ -1,13 +1,13 @@
-
+ <a name="#documentr_top"></a>
 
 > **This project requires JVM version of at least 1.7**
 
 
-[![Download](https://api.bintray.com/packages/synapticloopltd/maven/c3p0-multitenant/images/download.svg)](https://bintray.com/synapticloopltd/maven/c3p0-multitenant/_latestVersion) [![GitHub Release](https://img.shields.io/github/release/synapticloopltd/c3p0-multitenant.svg)](https://github.com/synapticloopltd/c3p0-multitenant/releases) 
+[![Download](https://api.bintray.com/packages/synapticloop/maven/c3p0-multitenant/images/download.svg)](https://bintray.com/synapticloop/maven/c3p0-multitenant/_latestVersion) [![GitHub Release](https://img.shields.io/github/release/synapticloopltd/c3p0-multitenant.svg)](https://github.com/synapticloopltd/c3p0-multitenant/releases) 
 
 
 
-<a name="heading_0"></a>
+<a name="documentr_heading_0"></a>
 
 # c3p0-multitenant <sup><sup>[top](#)</sup></sup>
 
@@ -20,36 +20,36 @@
 
 
 
-<a name="heading_1"></a>
+<a name="documentr_heading_1"></a>
 
 # Table of Contents <sup><sup>[top](#)</sup></sup>
 
 
 
- - [c3p0-multitenant](#heading_0)
- - [Table of Contents](#heading_1)
- - [Strategies](#heading_2)
-   - [ROUND_ROBIN](#heading_3)
-   - [LOAD_BALANCED](#heading_5)
-   - [SERIAL](#heading_7)
-   - [LEAST_LATENCY_SERIAL](#heading_9)
-   - [WEIGHTED](#heading_11)
-   - [NAMED](#heading_13)
- - [Building the Package](#heading_15)
-   - [*NIX/Mac OS X](#heading_16)
-   - [Windows](#heading_17)
- - [Running the Tests](#heading_18)
-   - [*NIX/Mac OS X](#heading_19)
-   - [Windows](#heading_20)
- - [Additional Testing Notes](#heading_21)
- - [Artefact Publishing - Github](#heading_22)
- - [Artefact Publishing - Bintray](#heading_23)
-   - [maven setup](#heading_24)
-   - [gradle setup](#heading_25)
-   - [Dependencies - Gradle](#heading_26)
-   - [Dependencies - Maven](#heading_27)
-   - [Dependencies - Downloads](#heading_28)
- - [License](#heading_34)
+ - [c3p0-multitenant](#documentr_heading_0)
+ - [Table of Contents](#documentr_heading_1)
+ - [Strategies](#documentr_heading_2)
+   - [ROUND_ROBIN](#documentr_heading_3)
+   - [LOAD_BALANCED](#documentr_heading_5)
+   - [SERIAL](#documentr_heading_7)
+   - [LEAST_LATENCY_SERIAL](#documentr_heading_9)
+   - [WEIGHTED](#documentr_heading_11)
+   - [NAMED](#documentr_heading_13)
+ - [Building the Package](#documentr_heading_15)
+   - [*NIX/Mac OS X](#documentr_heading_16)
+   - [Windows](#documentr_heading_17)
+ - [Running the Tests](#documentr_heading_18)
+   - [*NIX/Mac OS X](#documentr_heading_19)
+   - [Windows](#documentr_heading_20)
+ - [Additional Testing Notes](#documentr_heading_21)
+ - [Artefact Publishing - Github](#documentr_heading_22)
+ - [Artefact Publishing - Bintray](#documentr_heading_23)
+   - [maven setup](#documentr_heading_24)
+   - [gradle setup](#documentr_heading_25)
+   - [Dependencies - Gradle](#documentr_heading_26)
+   - [Dependencies - Maven](#documentr_heading_27)
+   - [Dependencies - Downloads](#documentr_heading_28)
+ - [License](#documentr_heading_34)
 
 
 # Multi-Tenanted c3p0 connection pools
@@ -206,7 +206,7 @@ num_tries_latency=50
 
 
 
-<a name="heading_2"></a>
+<a name="documentr_heading_2"></a>
 
 # Strategies <sup><sup>[top](#)</sup></sup>
 
@@ -223,7 +223,7 @@ are provided.
 The strategies are detailed below in more detail:
 
 
-<a name="heading_3"></a>
+<a name="documentr_heading_3"></a>
 
 ## `ROUND_ROBIN` <sup><sup>[top](#)</sup></sup>
 
@@ -302,7 +302,7 @@ tenants=one,two,three,four
 
 
 
-<a name="heading_5"></a>
+<a name="documentr_heading_5"></a>
 
 ## `LOAD_BALANCED` <sup><sup>[top](#)</sup></sup>
 
@@ -386,7 +386,7 @@ tenants=one,two,three,four
 
 
 
-<a name="heading_7"></a>
+<a name="documentr_heading_7"></a>
 
 ## `SERIAL` <sup><sup>[top](#)</sup></sup>
 
@@ -468,7 +468,7 @@ tenants=one,two,three,four
 
 
 
-<a name="heading_9"></a>
+<a name="documentr_heading_9"></a>
 
 ## `LEAST_LATENCY_SERIAL` <sup><sup>[top](#)</sup></sup>
 
@@ -559,7 +559,7 @@ num_tries_latency=50
 
 
 
-<a name="heading_11"></a>
+<a name="documentr_heading_11"></a>
 
 ## WEIGHTED <sup><sup>[top](#)</sup></sup>
 
@@ -681,7 +681,7 @@ weightings=60,25,10,5
 
 
 
-<a name="heading_13"></a>
+<a name="documentr_heading_13"></a>
 
 ## `NAMED` <sup><sup>[top](#)</sup></sup>
 
@@ -793,13 +793,13 @@ names=read,read,read,write
 
 
 
-<a name="heading_15"></a>
+<a name="documentr_heading_15"></a>
 
 # Building the Package <sup><sup>[top](#)</sup></sup>
 
 
 
-<a name="heading_16"></a>
+<a name="documentr_heading_16"></a>
 
 ## *NIX/Mac OS X <sup><sup>[top](#)</sup></sup>
 
@@ -810,7 +810,7 @@ From the root of the project, simply run
 
 
 
-<a name="heading_17"></a>
+<a name="documentr_heading_17"></a>
 
 ## Windows <sup><sup>[top](#)</sup></sup>
 
@@ -823,13 +823,13 @@ Note that this may also run tests (if applicable see the Testing notes)
 
 
 
-<a name="heading_18"></a>
+<a name="documentr_heading_18"></a>
 
 # Running the Tests <sup><sup>[top](#)</sup></sup>
 
 
 
-<a name="heading_19"></a>
+<a name="documentr_heading_19"></a>
 
 ## *NIX/Mac OS X <sup><sup>[top](#)</sup></sup>
 
@@ -843,7 +843,7 @@ if you do not have gradle installed, try:
 
 
 
-<a name="heading_20"></a>
+<a name="documentr_heading_20"></a>
 
 ## Windows <sup><sup>[top](#)</sup></sup>
 
@@ -861,11 +861,14 @@ The `--info` switch will also output logging for the tests
 
 
 
-<a name="heading_21"></a>
+<a name="documentr_heading_21"></a>
 
 # Additional Testing Notes <sup><sup>[top](#)</sup></sup>
 
 In order for the test to run, you __MUST__ have a cockroach DB setup:
+
+
+> see [https://www.cockroachlabs.com/docs/install-cockroachdb.html](https://www.cockroachlabs.com/docs/install-cockroachdb.html) for installation notes for your platform
 
 
 
@@ -905,29 +908,29 @@ This will allow the user `multitenant` to connect to the database.
 
 
 
-<a name="heading_22"></a>
+<a name="documentr_heading_22"></a>
 
 # Artefact Publishing - Github <sup><sup>[top](#)</sup></sup>
 
 This project publishes artefacts to [GitHub](https://github.com/)
 
-> Note that the latest version can be found [https://github.com/synapticloopltd/c3p0-multitenant/releases](https://github.com/synapticloopltd/c3p0-multitenant/releases)
+> Note that the latest version can be found [https://github.com/synapticloop/c3p0-multitenant/releases](https://github.com/synapticloop/c3p0-multitenant/releases)
 
 As such, this is not a repository, but a location to download files from.
 
 
 
-<a name="heading_23"></a>
+<a name="documentr_heading_23"></a>
 
 # Artefact Publishing - Bintray <sup><sup>[top](#)</sup></sup>
 
 This project publishes artefacts to [bintray](https://bintray.com/)
 
-> Note that the latest version can be found [https://bintray.com/synapticloopltd/maven/c3p0-multitenant/view](https://bintray.com/synapticloopltd/maven/c3p0-multitenant/view)
+> Note that the latest version can be found [https://bintray.com/synapticloop/maven/c3p0-multitenant/view](https://bintray.com/synapticloop/maven/c3p0-multitenant/view)
 
 
 
-<a name="heading_24"></a>
+<a name="documentr_heading_24"></a>
 
 ## maven setup <sup><sup>[top](#)</sup></sup>
 
@@ -973,7 +976,7 @@ this comes from the jcenter bintray, to set up your repository:
 
 
 
-<a name="heading_25"></a>
+<a name="documentr_heading_25"></a>
 
 ## gradle setup <sup><sup>[top](#)</sup></sup>
 
@@ -1005,7 +1008,7 @@ repositories {
 
 
 
-<a name="heading_26"></a>
+<a name="documentr_heading_26"></a>
 
 ## Dependencies - Gradle <sup><sup>[top](#)</sup></sup>
 
@@ -1013,9 +1016,9 @@ repositories {
 
 ```
 dependencies {
-	runtime(group: 'synapticloopltd', name: 'c3p0-multitenant', version: '1.1.0', ext: 'jar')
+	runtime(group: 'synapticloop', name: 'c3p0-multitenant', version: '1.1.1', ext: 'jar')
 
-	compile(group: 'synapticloopltd', name: 'c3p0-multitenant', version: '1.1.0', ext: 'jar')
+	compile(group: 'synapticloop', name: 'c3p0-multitenant', version: '1.1.1', ext: 'jar')
 }
 ```
 
@@ -1027,9 +1030,9 @@ or, more simply for versions of gradle greater than 2.1
 
 ```
 dependencies {
-	runtime 'synapticloopltd:c3p0-multitenant:1.1.0'
+	runtime 'synapticloop:c3p0-multitenant:1.1.1'
 
-	compile 'synapticloopltd:c3p0-multitenant:1.1.0'
+	compile 'synapticloop:c3p0-multitenant:1.1.1'
 }
 ```
 
@@ -1037,7 +1040,7 @@ dependencies {
 
 
 
-<a name="heading_27"></a>
+<a name="documentr_heading_27"></a>
 
 ## Dependencies - Maven <sup><sup>[top](#)</sup></sup>
 
@@ -1045,9 +1048,9 @@ dependencies {
 
 ```
 <dependency>
-	<groupId>synapticloopltd</groupId>
+	<groupId>synapticloop</groupId>
 	<artifactId>c3p0-multitenant</artifactId>
-	<version>1.1.0</version>
+	<version>1.1.1</version>
 	<type>jar</type>
 </dependency>
 ```
@@ -1056,7 +1059,7 @@ dependencies {
 
 
 
-<a name="heading_28"></a>
+<a name="documentr_heading_28"></a>
 
 ## Dependencies - Downloads <sup><sup>[top](#)</sup></sup>
 
@@ -1096,7 +1099,7 @@ You will also need to download the following dependencies:
 
 
 
-<a name="heading_34"></a>
+<a name="documentr_heading_34"></a>
 
 # License <sup><sup>[top](#)</sup></sup>
 
@@ -1105,7 +1108,7 @@ You will also need to download the following dependencies:
 ```
 The MIT License (MIT)
 
-Copyright (c) 2016 synapticloopltd
+Copyright (c) 2016 synapticloop
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

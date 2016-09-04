@@ -3,6 +3,9 @@
 
 In order for the test to run, you __MUST__ have a cockroach DB setup:
 
+
+> see [https://www.cockroachlabs.com/docs/install-cockroachdb.html](https://www.cockroachlabs.com/docs/install-cockroachdb.html) for installation notes for your platform
+
 ```
 cockroach start --store=cockroachdb/node1 --port=26257 --http-port=8080 --background
 cockroach start --store=cockroachdb/node2 --port=26258 --http-port=8081 --join=localhost:26257 --background

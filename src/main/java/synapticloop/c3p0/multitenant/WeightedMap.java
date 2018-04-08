@@ -1,7 +1,7 @@
 package synapticloop.c3p0.multitenant;
 
 /*
- * Copyright (c) 2016 Synapticloop.
+ * Copyright (c) 2016 - 2018 Synapticloop.
  * 
  * All rights reserved.
  * 
@@ -33,10 +33,7 @@ import com.mchange.v2.log.MLogger;
  * @param <E> The type for the collection 
  */
 public class WeightedMap<E> {
-	private static final MLogger LOGGER;
-	static {
-		LOGGER = MLog.getLogger(WeightedMap.class);
-	}
+	private static final MLogger LOGGER = MLog.getLogger(WeightedMap.class);
 
 	private final NavigableMap<Integer, E> map = new TreeMap<Integer, E>();
 	private final Random random;

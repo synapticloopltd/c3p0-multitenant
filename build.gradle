@@ -24,7 +24,7 @@ group = 'synapticloop'
 archivesBaseName = 'c3p0-multitenant'
 description = """Multi tenanted c3p0 pool"""
 
-version = '1.1.1'
+version = '1.2.1'
 
 
 sourceCompatibility = 1.7
@@ -91,14 +91,17 @@ test {
 copyrightr {
 	dryRun = false
 
-	copyrightHolder = "synapticloop"
+	copyrightHolder = "Synapticloop"
 
 	includes = [ 
 		"src/**/*.java",
 		"src/**/*.groovy",
 	]
 
-	excludes = [ "**/*.class" ]
+	excludes = [ 
+		"**/*.class",
+		"src/test/java/**/*.java" 
+	]
 
 	onlyReplaceFirst = false
 
@@ -109,7 +112,7 @@ copyrightr {
 
 documentr {
 	directory = '.'
-	verbose = 'true'
+	verbose = 'false'
 	extension = 'md'
 }
 

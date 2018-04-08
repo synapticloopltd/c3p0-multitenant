@@ -1,7 +1,7 @@
 package synapticloop.c3p0.multitenant;
 
 /*
- * Copyright (c) 2016 Synapticloop.
+ * Copyright (c) 2016 - 2018 Synapticloop.
  * 
  * All rights reserved.
  * 
@@ -53,10 +53,7 @@ import com.mchange.v2.naming.JavaBeanReferenceMaker;
  */
 public class MultiTenantComboPooledDataSource implements Serializable, Referenceable {
 	private static final long serialVersionUID = -8817106257353513000L;
-	private static final MLogger LOGGER;
-	static {
-		LOGGER = MLog.getLogger(MultiTenantComboPooledDataSource.class);
-	}
+	private static final MLogger LOGGER = MLog.getLogger(MultiTenantComboPooledDataSource.class);
 
 	private static final int NUM_TRIES_LATENCY_DEFAULT = 50;
 	private static final Strategy DEFAULT_STRATEGY = Strategy.ROUND_ROBIN;
@@ -73,12 +70,12 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	public static final String KEY_DEFAULT_WEIGHTED_NAME_MAP = "";
 
 	public enum Strategy {
-		ROUND_ROBIN, // just go through the connection pools, disregarding load
-		LOAD_BALANCED, // get the lowest number of connections and use this pool
-		SERIAL, // use up all of the first connections, going to the next one when full
+		ROUND_ROBIN,          // just go through the connection pools, disregarding load
+		LOAD_BALANCED,        // get the lowest number of connections and use this pool
+		SERIAL,               // use up all of the first connections, going to the next one when full
 		LEAST_LATENCY_SERIAL, // get the least latency connection in a serial fashion
-		WEIGHTED, // weight the connections, from the passed in values
-		NAMED, // get a connection from one of the named pools, there may be more than one pool per name, they will be weighted between them
+		WEIGHTED,             // weight the connections, from the passed in values
+		NAMED,                // get a connection from one of the named pools, there may be more than one pool per name, they will be weighted between them
 	}
 
 	private Strategy strategy = DEFAULT_STRATEGY;

@@ -1,8 +1,5 @@
 package synapticloop.c3p0.multitenant.util;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 /*
  * Copyright (c) 2016 Synapticloop.
  * 
@@ -18,6 +15,9 @@ import java.sql.SQLException;
  * A copy of the Licence is available in the file named LICENSE.txt shipped with 
  * this source code or binaries.
  */
+
+import java.sql.Connection;
+import java.sql.SQLException;
 
 public class SlowQueryThread implements Runnable {
 	private Connection connection;

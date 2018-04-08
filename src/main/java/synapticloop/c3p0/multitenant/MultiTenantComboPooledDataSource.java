@@ -324,7 +324,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 				LOGGER.log(MLevel.SEVERE, String.format("Could not find named configuration for '%s', this will __NOT__ be added to the pools.", tenant));
 			} else {
 				comboPooledDataSourceMap.put(tenant, comboPooledDataSource);
-	
+
 				if(isDebugEnabled) {
 					LOGGER.log(MLevel.DEBUG, String.format("Created multi-tenant connection pool for tenant '%s'", tenant));
 				}
@@ -332,7 +332,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 				// now set up all of the data structures
 				comboPooledDataSources.add(comboPooledDataSource);
 				connectionRequestHitCountMap.put(tenant, new MutableInt());
-		}
+			}
 		}
 
 		if(removableTenants.size() != 0) {
@@ -618,21 +618,22 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	}
 
 	/**
-	 * Get a load balanced connection 
+	 * Get a load balanced connection which goes through all of the busy connections and returns
+	 * 
 	 * 
 	 * @return the connection from the load balancer
 	 * 
 	 * @throws SQLException If there was an error getting the connection
 	 */
 	private synchronized Connection getLoadBalancedConnection() throws SQLException {
+		int numPoolsFailed = 0;
 		int maxBusyConnections = 0;
 		int poolIndex = 0;
 		int readyPoolIndex = 0;
 		String dataSourceName = null;
 
-		try {
-			for (ComboPooledDataSource comboPooledDataSource : comboPooledDataSources) {
-				// TODO - do we really want to fail on this one... - may need to split out try/catch
+		for (ComboPooledDataSource comboPooledDataSource : comboPooledDataSources) {
+			try {
 				int numBusyConnections = comboPooledDataSource.getNumBusyConnections();
 				if(numBusyConnections == 0) {
 					readyPoolIndex = poolIndex;
@@ -646,18 +647,28 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 						// here the num busy isn't the same, so we assign
 						readyPoolIndex = poolIndex;
 					}
-
-					poolIndex++;
-
 				}
+			} catch (SQLException ex) {
+				numPoolsFailed++;
+				if(LOGGER.isLoggable(MLevel.SEVERE)) {
+					LOGGER.log(MLevel.SEVERE, String.format("Could not get the number of busy connections for '%s'", dataSourceName));
+				}
+			} finally {
+				poolIndex++;
 			}
+		}
 
+		if(numPoolsFailed < comboPooledDataSources.size()) {
 			ComboPooledDataSource comboPooledDataSource = comboPooledDataSources.get(readyPoolIndex);
 			dataSourceName = comboPooledDataSource.getDataSourceName();
 			incrementRequestHitCountMap(comboPooledDataSource);
-			return(comboPooledDataSource.getConnection());
-		} catch (SQLException ex) {
-			throw new SQLException(String.format("Could not get a connection to data source name '%s'", dataSourceName), ex);
+			try {
+				return(comboPooledDataSource.getConnection());
+			} catch (SQLException ex) {
+				throw new SQLException(String.format("Could not get a connection to data source name '%s'", dataSourceName), ex);
+			}
+		} else {
+			throw new SQLException(String.format("Could not get any connection to a data source"));
 		}
 	}
 
@@ -666,7 +677,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 	 * 
 	 * @return the connection for the weighted parameter
 	 * 
-	 * @throws SQLException if there was wn error getting the connection
+	 * @throws SQLException if there was an error getting the connection
 	 */
 	private Connection getWeightedConnection() throws SQLException {
 		ComboPooledDataSource comboPooledDataSource = weightedMap.next();
@@ -714,6 +725,13 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		return(-1);
 	}
 
+	/**
+	 * Get the request pool count for a specific name
+	 * 
+	 * @param name the name of the request pool
+	 * 
+	 * @return the request pool count
+	 */
 	public int getRequestPoolCountForName(String name) {
 		if(connectionRequestPoolHitCountMap.containsKey(name)) {
 			return(connectionRequestPoolHitCountMap.get(name).getValue());
@@ -722,6 +740,7 @@ public class MultiTenantComboPooledDataSource implements Serializable, Reference
 		return(-1);
 	}
 
+	@Override
 	public Reference getReference() throws NamingException {
 		return REFERENCE_MAKER.createReference(this);
 	}

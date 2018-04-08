@@ -1016,9 +1016,9 @@ repositories {
 
 ```
 dependencies {
-	runtime(group: 'synapticloop', name: 'c3p0-multitenant', version: '1.1.1', ext: 'jar')
+	runtime(group: 'synapticloop', name: 'c3p0-multitenant', version: '1.2.1', ext: 'jar')
 
-	compile(group: 'synapticloop', name: 'c3p0-multitenant', version: '1.1.1', ext: 'jar')
+	compile(group: 'synapticloop', name: 'c3p0-multitenant', version: '1.2.1', ext: 'jar')
 }
 ```
 
@@ -1030,9 +1030,9 @@ or, more simply for versions of gradle greater than 2.1
 
 ```
 dependencies {
-	runtime 'synapticloop:c3p0-multitenant:1.1.1'
+	runtime 'synapticloop:c3p0-multitenant:1.2.1'
 
-	compile 'synapticloop:c3p0-multitenant:1.1.1'
+	compile 'synapticloop:c3p0-multitenant:1.2.1'
 }
 ```
 
@@ -1050,7 +1050,7 @@ dependencies {
 <dependency>
 	<groupId>synapticloop</groupId>
 	<artifactId>c3p0-multitenant</artifactId>
-	<version>1.1.1</version>
+	<version>1.2.1</version>
 	<type>jar</type>
 </dependency>
 ```

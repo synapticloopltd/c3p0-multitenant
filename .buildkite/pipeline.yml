@@ -1,0 +1,9 @@
+steps:
+  - command: "./start-cockroach.sh"
+    label: "start cockroach"
+
+  - command: "./gradlew --info build"
+    label: "gradle build"
+
+  - command: "./stop-cockroach.sh"
+    label: "stop cockroach"

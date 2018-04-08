@@ -186,4 +186,3 @@ bintray {
 }
 
 build.finalizedBy(project.tasks.cobertura)
-build.finalizedBy(project.tasks.documentr)

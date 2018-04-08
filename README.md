@@ -914,7 +914,7 @@ This will allow the user `multitenant` to connect to the database.
 
 This project publishes artefacts to [GitHub](https://github.com/)
 
-> Note that the latest version can be found [https://github.com/synapticloop/c3p0-multitenant/releases](https://github.com/synapticloop/c3p0-multitenant/releases)
+> Note that the latest version can be found [https://github.com/synapticloopltd/c3p0-multitenant/releases](https://github.com/synapticloopltd/c3p0-multitenant/releases)
 
 As such, this is not a repository, but a location to download files from.
 
@@ -1070,30 +1070,30 @@ You will also need to download the following dependencies:
 
 ### cobertura dependencies
 
-  - net.sourceforge.cobertura:cobertura:2.1.1: (It may be available on one of: [bintray](https://bintray.com/net.sourceforge.cobertura/maven/cobertura/2.1.1/view#files/net.sourceforge.cobertura/cobertura/2.1.1) [mvn central](http://search.maven.org/#artifactdetails|net.sourceforge.cobertura|cobertura|2.1.1|jar))
+  - `net.sourceforge.cobertura:cobertura:2.1.1`: (It may be available on one of: [bintray](https://bintray.com/net.sourceforge.cobertura/maven/cobertura/2.1.1/view#files/net.sourceforge.cobertura/cobertura/2.1.1) [mvn central](http://search.maven.org/#artifactdetails|net.sourceforge.cobertura|cobertura|2.1.1|jar))
 
 
 ### compile dependencies
 
-  - com.mchange:c3p0:0.9.5.2: (It may be available on one of: [bintray](https://bintray.com/com.mchange/maven/c3p0/0.9.5.2/view#files/com.mchange/c3p0/0.9.5.2) [mvn central](http://search.maven.org/#artifactdetails|com.mchange|c3p0|0.9.5.2|jar))
+  - `com.mchange:c3p0:0.9.5.2`: (It may be available on one of: [bintray](https://bintray.com/com.mchange/maven/c3p0/0.9.5.2/view#files/com.mchange/c3p0/0.9.5.2) [mvn central](http://search.maven.org/#artifactdetails|com.mchange|c3p0|0.9.5.2|jar))
 
 
 ### runtime dependencies
 
-  - com.mchange:c3p0:0.9.5.2: (It may be available on one of: [bintray](https://bintray.com/com.mchange/maven/c3p0/0.9.5.2/view#files/com.mchange/c3p0/0.9.5.2) [mvn central](http://search.maven.org/#artifactdetails|com.mchange|c3p0|0.9.5.2|jar))
+  - `com.mchange:c3p0:0.9.5.2`: (It may be available on one of: [bintray](https://bintray.com/com.mchange/maven/c3p0/0.9.5.2/view#files/com.mchange/c3p0/0.9.5.2) [mvn central](http://search.maven.org/#artifactdetails|com.mchange|c3p0|0.9.5.2|jar))
 
 
 ### testCompile dependencies
 
-  - org.postgresql:postgresql:9.4.1209.jre7: (It may be available on one of: [bintray](https://bintray.com/org.postgresql/maven/postgresql/9.4.1209.jre7/view#files/org.postgresql/postgresql/9.4.1209.jre7) [mvn central](http://search.maven.org/#artifactdetails|org.postgresql|postgresql|9.4.1209.jre7|jar))
-  - junit:junit:4.12: (It may be available on one of: [bintray](https://bintray.com/junit/maven/junit/4.12/view#files/junit/junit/4.12) [mvn central](http://search.maven.org/#artifactdetails|junit|junit|4.12|jar))
+  - `org.postgresql:postgresql:42.2.2`: (It may be available on one of: [bintray](https://bintray.com/org.postgresql/maven/postgresql/42.2.2/view#files/org.postgresql/postgresql/42.2.2) [mvn central](http://search.maven.org/#artifactdetails|org.postgresql|postgresql|42.2.2|jar))
+  - `junit:junit:4.12`: (It may be available on one of: [bintray](https://bintray.com/junit/maven/junit/4.12/view#files/junit/junit/4.12) [mvn central](http://search.maven.org/#artifactdetails|junit|junit|4.12|jar))
 
 
 ### testRuntime dependencies
 
-  - org.postgresql:postgresql:9.4.1209.jre7: (It may be available on one of: [bintray](https://bintray.com/org.postgresql/maven/postgresql/9.4.1209.jre7/view#files/org.postgresql/postgresql/9.4.1209.jre7) [mvn central](http://search.maven.org/#artifactdetails|org.postgresql|postgresql|9.4.1209.jre7|jar))
-  - junit:junit:4.12: (It may be available on one of: [bintray](https://bintray.com/junit/maven/junit/4.12/view#files/junit/junit/4.12) [mvn central](http://search.maven.org/#artifactdetails|junit|junit|4.12|jar))
-  - org.slf4j:slf4j-api:1.7.13: (It may be available on one of: [bintray](https://bintray.com/org.slf4j/maven/slf4j-api/1.7.13/view#files/org.slf4j/slf4j-api/1.7.13) [mvn central](http://search.maven.org/#artifactdetails|org.slf4j|slf4j-api|1.7.13|jar))
+  - `org.postgresql:postgresql:42.2.2`: (It may be available on one of: [bintray](https://bintray.com/org.postgresql/maven/postgresql/42.2.2/view#files/org.postgresql/postgresql/42.2.2) [mvn central](http://search.maven.org/#artifactdetails|org.postgresql|postgresql|42.2.2|jar))
+  - `junit:junit:4.12`: (It may be available on one of: [bintray](https://bintray.com/junit/maven/junit/4.12/view#files/junit/junit/4.12) [mvn central](http://search.maven.org/#artifactdetails|junit|junit|4.12|jar))
+  - `org.slf4j:slf4j-api:1.7.25`: (It may be available on one of: [bintray](https://bintray.com/org.slf4j/maven/slf4j-api/1.7.25/view#files/org.slf4j/slf4j-api/1.7.25) [mvn central](http://search.maven.org/#artifactdetails|org.slf4j|slf4j-api|1.7.25|jar))
 
 **NOTE:** You may need to download any dependencies of the above dependencies in turn (i.e. the transitive dependencies)
 
@@ -1108,7 +1108,7 @@ You will also need to download the following dependencies:
 ```
 The MIT License (MIT)
 
-Copyright (c) 2016 synapticloop
+Copyright (c) 2018 synapticloop
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

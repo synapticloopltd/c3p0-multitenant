@@ -10,12 +10,13 @@
 plugins {
 	id 'java'
 	id 'eclipse'
-	id 'net.saliman.cobertura' version '2.3.0'
-	id 'synapticloop.copyrightr' version '1.0.1'
-	id 'synapticloop.documentr' version '2.7.0'
+	id 'net.saliman.cobertura' version '2.5.4'
+	id 'synapticloop.copyrightr' version '1.2.1'
+	id 'synapticloop.documentr' version '2.9.0'
 	id 'maven-publish'
 	id 'co.riiid.gradle' version '0.4.2'
-	id 'com.jfrog.bintray' version '1.6'
+	id 'com.jfrog.bintray' version '1.8.0'
+	id 'com.github.ben-manes.versions' version '0.17.0'
 }
 
 // textual information for this project
@@ -42,11 +43,11 @@ dependencies {
 
 	compile 'com.mchange:c3p0:0.9.5.2'
 
-	testRuntime 'org.postgresql:postgresql:9.4.1209.jre7'
+	testRuntime 'org.postgresql:postgresql:42.2.2'
 	testRuntime 'junit:junit:4.12'
-	testRuntime 'org.slf4j:slf4j-api:1.7.13'
+	testRuntime 'org.slf4j:slf4j-api:1.7.25'
 	
-	testCompile 'org.postgresql:postgresql:9.4.1209.jre7'
+	testCompile 'org.postgresql:postgresql:42.2.2'
 	testCompile 'junit:junit:4.12'
 }
 
@@ -64,9 +65,18 @@ configurations.all {
 	}
 }
 
-/*
- * COBERTURA
- */
+dependencyUpdates.resolutionStrategy = {
+	componentSelection { rules ->
+		rules.all { ComponentSelection selection ->
+			boolean rejected = ['alpha', 'beta', 'rc', 'cr', 'm', 'b', 'dmr'].any { qualifier ->
+				selection.candidate.version ==~ /(?i).*[.-]${qualifier}[.\d-]*/
+			}
+			if (rejected) {
+				selection.reject('Release candidate')
+			}
+		}
+	}
+}
 
 cobertura {
 	coverageFormats = [ 'html', 'xml']
@@ -79,34 +89,20 @@ test {
 }
 
 copyrightr {
-	// If set to true (default), this will only log what would have been 
-	// changed, if set to false, this will over-write the files __without__
-	// warning
 	dryRun = false
 
-	// This will be part of the regular expression that is searched for.
-	// This helps to narrow down the lines that will be updated, useful
-	// where there may be other companies that have copyright information
 	copyrightHolder = "synapticloop"
 
-	// Which files are to be included, by default the included files are
-	// - src/**/*.java, and
-	// - src/**/*.groovy
 	includes = [ 
 		"src/**/*.java",
 		"src/**/*.groovy",
 	]
 
-	// which files are to be excluded, by default there are no exclusions
 	excludes = [ "**/*.class" ]
 
-	// whether to only replace the first found instance, by default this
-	// is set to true
 	onlyReplaceFirst = false
 
-	// the year separator to use
 	yearSeparator = " - "
-
 }
 
 
